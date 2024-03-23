@@ -11,9 +11,7 @@ class AudioProcessorApp(QWidget):
         self.init_ui()
 
     def handle_input(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        audio_file, _ = QFileDialog.getOpenFileName(self, "Выберите файл для обработки", "", "All Files (*);;MP3 Files (*.mp3)", options=options)
+        audio_file, _ = QFileDialog.getOpenFileName(self, "Выберите файл для обработки", "", "All Files (*);;MP3 Files (*.mp3)")
         self.audio_file_path = audio_file
         self.audio_file_line.setText(self.audio_file_path)
         self.audio_treatment_line.setEnabled(True)
