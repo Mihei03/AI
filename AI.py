@@ -1,39 +1,86 @@
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QSpinBox, QFileDialog, QMessageBox, QLineEdit
 import subprocess
-import os
-import inspect
 
-base_folder = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-spleeter_executable = 'spleeter'
-audio_file_path = ""
+class AudioProcessorApp(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.audio_file_path = ""
+        self.treatment = "2"
+        self.output_folder_path = ""
+        self.init_ui()
 
-def handle_input():
-    global audio_file_path
-    while True:
-        audio_file = input("Напиши название файла для обработки (без расширения): ")
-        audio_file_path = os.path.join(base_folder, f"песни\\{audio_file}.mp3")
-        if not os.path.exists(audio_file_path):
-            print(f"Файл с именем '{audio_file}.mp3' не найден в папке 'песни'. Проверьте правильность имени файла.\n")
+    def handle_input(self):
+        audio_file = QFileDialog.getOpenFileName(self, "Выберите файл для обработки", "", "All Files (*);;MP3 Files (*.mp3)")
+        if audio_file:
+            self.audio_file_path = audio_file
+            self.audio_file_line.setText(self.audio_file_path)
+            self.audio_treatment_line.setEnabled(True)
+            self.output_treatment_button.setEnabled(True)
+
+    def handle_output(self):
+        output_folder = QFileDialog.getExistingDirectory(self, "Выберите папку для сохранения обработанных файлов")
+        if output_folder:
+            self.output_folder_path = output_folder
+            self.audio_treatment_line.setEnabled(True)
+            self.output_treatment_button.setEnabled(True)
+            self.output_folder_line.setText(self.output_folder_path)
         else:
-            break
+            QMessageBox.critical(self, "Ошибка", "Папка для сохранения обработанных файлов не выбрана.")
 
-    return audio_file, audio_file_path
+    def process_audio(self):
+        if not self.output_folder_path:
+            QMessageBox.warning(self, "Предупреждение", "Выберите папку для сохранения файла.")
+            return
 
+        treatment = str(self.treatment_line.value())
+        process = subprocess.run([spleeter_executable, 'separate', '-p', f'spleeter:{treatment}stems', '-o', self.output_folder_path, self.audio_file_path], shell=True)
 
-print('Привет! Пожалуйста, ответь, что и как ты хочешь обработать:')
-audio_file = handle_input()
+        if process.returncode == 0:
+            QMessageBox.information(self, "Успех", "Аудио успешно обработано!")
+        else:
+            QMessageBox.critical(self, "Ошибка", "Произошла ошибка при обработке аудио.")
 
-print('Доступны 3 варианта обработки: \nVocals/accompaniment - 2 \nVocals/drums/bass/other - 4 \nVocals/drums/bass/piano/other - 5 \n')
+    def init_ui(self):
+        self.setWindowTitle("Audio Processor")
+        self.setGeometry(100, 100, 400, 400)
 
-while True:
-    treatment = input("Выбери вариант обработки: ")
-    if treatment in ['2', '4', '5']:
-        break
-    print('Некорректный вариант обработки. Пожалуйста, выбери 2, 4 или 5.\n')
+        self.audio_file_label = QLabel("Выберите файл для обработки:")
+        self.audio_file_line = QLineEdit()
+        self.select_button = QPushButton("Выбрать файл")
+        self.select_button.clicked.connect(self.handle_input)
 
-current_directory = os.path.dirname(__file__)
-command = f'{spleeter_executable} separate -p spleeter:{treatment}stems -o {current_directory}/обработка/ "{audio_file_path}"'
+        self.audio_treatment_label = QLabel("Выберите место для сохранения обработанных файлов:")
+        self.output_folder_line = QLineEdit()
+        self.output_treatment_button = QPushButton("Выбрать папку для сохранения обработанного аудио")
+        self.output_treatment_button.clicked.connect(self.handle_output)
+        self.output_treatment_button.setEnabled(False)
 
-# Запуск процесса разделения через командную строку
-subprocess.run(command, shell=True)
+        self.treatment_label = QLabel("Выбери вариант обработки (2, 4, 5):")
+        self.treatment_line = QSpinBox()
+        self.treatment_line.setValue(int(self.treatment))
+        self.treatment_line.setEnabled(False)
+        self.process_button = QPushButton("Обработать аудио")
+        self.process_button.clicked.connect(self.process_audio)
+        
+        layout = QVBoxLayout()
+        layout.addWidget(self.audio_file_label)
+        layout.addWidget(self.audio_file_line)
+        layout.addWidget(self.select_button)
 
-print('Аудио успешно разделено!')
+        layout.addWidget(self.audio_treatment_label)
+        layout.addWidget(self.output_folder_line)
+        layout.addWidget(self.output_treatment_button)
+
+        layout.addWidget(self.treatment_label)
+        layout.addWidget(self.treatment_line)
+        layout.addWidget(self.process_button)
+
+        self.setLayout(layout)
+        self.show()
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = AudioProcessorApp()
+    app.exec_()
+
