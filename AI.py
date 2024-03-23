@@ -31,7 +31,7 @@ while True:
     print('Некорректный вариант обработки. Пожалуйста, выбери 2, 4 или 5.\n')
 
 current_directory = os.path.dirname(__file__)
-command = f'{spleeter_executable} separate -p spleeter:{treatment}stems -o {current_directory}обработка/ "{audio_file_path}"'
+command = f'{spleeter_executable} separate -p spleeter:{treatment}stems -o {current_directory}/обработка/ "{audio_file_path}"'
 
 # Запуск процесса разделения через командную строку
 subprocess.run(command, shell=True)
