@@ -2,7 +2,6 @@ import subprocess
 import os
 import inspect
 
-
 base_folder = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 spleeter_executable = 'spleeter'
 audio_file_path = ""
@@ -12,7 +11,6 @@ def handle_input():
     while True:
         audio_file = input("Напиши название файла для обработки (без расширения): ")
         audio_file_path = os.path.join(base_folder, f"песни\\{audio_file}.mp3")
-
         if not os.path.exists(audio_file_path):
             print(f"Файл с именем '{audio_file}.mp3' не найден в папке 'песни'. Проверьте правильность имени файла.\n")
         else:
@@ -32,7 +30,8 @@ while True:
         break
     print('Некорректный вариант обработки. Пожалуйста, выбери 2, 4 или 5.\n')
 
-command = f'{spleeter_executable} separate -p spleeter:{treatment}stems -o обработка "{audio_file_path}"'
+current_directory = os.path.dirname(__file__)
+command = f'{spleeter_executable} separate -p spleeter:{treatment}stems -o {current_directory}обработка/ "{audio_file_path}"'
 
 # Запуск процесса разделения через командную строку
 subprocess.run(command, shell=True)
