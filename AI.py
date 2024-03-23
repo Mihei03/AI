@@ -1,6 +1,6 @@
 import sys
 import subprocess
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QSpinBox, QFileDialog, QMessageBox, QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QSpinBox, QFileDialog, QMessageBox, QLineEdit, QComboBox  
 from PyQt5.QtCore import QDir, QStandardPaths
 
 class AudioProcessorApp(QWidget):
@@ -32,7 +32,7 @@ class AudioProcessorApp(QWidget):
                 self.audio_treatment_line.setEnabled(True)
                 self.output_treatment_button.setEnabled(True)
                 self.process_button.setEnabled(True)
-                self.treatment_line.setEnabled(True)
+                self.treatment_combo.setEnabled(True)
             else:
                 QMessageBox.critical(self, "Ошибка", "Папка для сохранения обработанных файлов не выбрана.")
         else:
@@ -48,7 +48,7 @@ class AudioProcessorApp(QWidget):
             QMessageBox.warning(self, "Предупреждение", "Выберите папку для сохранения файла.")
             return
 
-        treatment = str(self.treatment_line.value())
+        treatment = self.treatment_combo.currentText()  # Использование текущего выбранного значения из комбобокса
         command = f'spleeter separate -p spleeter:{treatment}stems -o "{self.output_folder_path}" "{self.audio_file_path}"'
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         output, error = process.communicate()
@@ -78,6 +78,12 @@ class AudioProcessorApp(QWidget):
         self.treatment_line.setValue(int(self.treatment))
         self.treatment_line.setEnabled(False)
 
+        self.treatment_label = QLabel("Выбери вариант обработки (2, 4, 5) \n- 2 - Vocals / accompaniment separation \n- 4 - Vocals / drums / bass / other separation \n- 5 - Vocals / drums / bass / piano / other separation:")
+        self.treatment_combo = QComboBox()  # Замена QSpinBox на QComboBox
+        self.treatment_combo.addItems(["2", "4", "5"])  # Добавление вариантов обработки
+        self.treatment_combo.setCurrentText(self.treatment)  # Установка значения по умолчанию
+        self.treatment_combo.setEnabled(False)
+
         self.audio_treatment_label = QLabel("Выберите место для сохранения обработанных файлов:")
         self.audio_treatment_line = QLineEdit() 
         self.audio_treatment_line.setEnabled(False)  
@@ -96,7 +102,8 @@ class AudioProcessorApp(QWidget):
         layout.addWidget(self.output_treatment_button)
 
         layout.addWidget(self.treatment_label)
-        layout.addWidget(self.treatment_line)
+        layout.addWidget(self.treatment_combo)
+        
         layout.addWidget(self.process_button)
 
         self.setLayout(layout)
