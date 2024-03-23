@@ -1,6 +1,7 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QSpinBox, QFileDialog, QMessageBox, QLineEdit
 import subprocess
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QSpinBox, QFileDialog, QMessageBox, QLineEdit
+from PyQt5.QtCore import QDir, QStandardPaths
 
 class AudioProcessorApp(QWidget):
     def __init__(self):
@@ -12,22 +13,31 @@ class AudioProcessorApp(QWidget):
 
     def handle_input(self):
         audio_file, _ = QFileDialog.getOpenFileName(self, "Выберите файл для обработки", "", "All Files (*);;MP3 Files (*.mp3)")
-        self.audio_file_path = audio_file
-        self.audio_file_line.setText(self.audio_file_path)
-        self.audio_treatment_line.setEnabled(True)
-        self.output_treatment_button.setEnabled(True)
-
-    def handle_output(self):
-        output_folder = QFileDialog.getExistingDirectory(self, "Выберите папку для сохранения обработанных файлов")
-        if output_folder:
-            self.output_folder_path = output_folder
+        if audio_file:
+            if not audio_file.endswith('.mp3'):
+                QMessageBox.warning(self, "Предупреждение", "Выберите файл формата MP3.")
+                return
+            self.audio_file_path = audio_file
+            self.audio_file_line.setText(self.audio_file_path)
             self.audio_treatment_line.setEnabled(True)
             self.output_treatment_button.setEnabled(True)
-            self.process_button.setEnabled(True)
-            self.treatment_line.setEnabled(True)
-            self.output_folder_line.setText(self.output_folder_path)
+
+    def handle_output(self):
+        desktop_path = QStandardPaths.writableLocation(QStandardPaths.DesktopLocation)
+        if desktop_path:
+            output_folder = QFileDialog.getExistingDirectory(self, "Выберите папку для сохранения обработанных файлов", desktop_path)
+            if output_folder:
+                self.output_folder_path = output_folder
+                self.output_folder_line.setText(self.output_folder_path)
+                self.audio_treatment_line.setEnabled(True)
+                self.output_treatment_button.setEnabled(True)
+                self.process_button.setEnabled(True)
+                self.treatment_line.setEnabled(True)
+            else:
+                QMessageBox.critical(self, "Ошибка", "Папка для сохранения обработанных файлов не выбрана.")
         else:
-            QMessageBox.critical(self, "Ошибка", "Папка для сохранения обработанных файлов не выбрана.")
+            QMessageBox.critical(self, "Ошибка", "Рабочий стол не найден.")
+
 
     def process_audio(self):
         if not self.audio_file_path:
@@ -59,7 +69,7 @@ class AudioProcessorApp(QWidget):
 
         self.audio_treatment_label = QLabel("Выберите место для сохранения обработанных файлов:")
         self.output_folder_line = QLineEdit()
-        self.output_treatment_button = QPushButton("Выбрать папку для сохранения обработанного аудио")
+        self.output_treatment_button = QPushButton("Выбрать папку для сохранения обработанного аудио файла")
         self.output_treatment_button.clicked.connect(self.handle_output)
         self.output_treatment_button.setEnabled(False)
 
