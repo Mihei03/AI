@@ -14,7 +14,7 @@
 - После обычной установки, запустите установку ещё раз и сделайте следующее:
 ![python.png](Readme/python.jpg)
 ![python1.png](Readme/python1.jpg)
-![python2.png](Readmepython2.jpg)
+![python2.png](Readme/python2.jpg)
 - [Скачать ffmpeg](https://ffmpeg.org/download.html)
 - Установка:
 - Перейдите в C:\Program Files и расспакуйте архив.
