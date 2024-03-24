@@ -12,9 +12,9 @@
 ## Зависимости
 - [Скачать python 3.8](https://www.python.org/downloads/release/python-380/)
 - После обычной установки, запустите установку ещё раз и сделайте следующее:
-![python.png](Readme/python.png)
-![python1.png](Readme/python1.png)
-![python2.png](Readmepython2.png)
+![python.png](Readme/python.jpg)
+![python1.png](Readme/python1.jpg)
+![python2.png](Readmepython2.jpg)
 - [Скачать ffmpeg](https://ffmpeg.org/download.html)
 - Установка:
 - Перейдите в C:\Program Files и расспакуйте архив.
