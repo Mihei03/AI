@@ -1,9 +1,9 @@
-#@title Setup 2 (just run this once)
- # force working-directory to so-vits-svc - this line is just for safety and is probably not required
+import sys
 import tarfile
 import os
 from zipfile import ZipFile
-os.chdir(r'C:\Users\mihei\Desktop\so-vits-svc')
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QLabel, QLineEdit, QCheckBox, QPushButton
+
 # taken from https://github.com/CookiePPP/cookietts/blob/master/CookieTTS/utils/dataset/extract_unknown.py
 def extract(path):
     if path.endswith(".zip"):
@@ -241,13 +241,7 @@ import glob
 import json
 import copy
 import logging
-import io
-from ipywidgets import widgets
-from pathlib import Path
-from IPython.display import Audio, display
-
-os.chdir(r'C:\Users\mihei\Desktop\so-vits-svc')
-
+from PyQt5.QtCore import Qt
 import torch
 from inference import infer_tool
 from inference import slicer
@@ -255,7 +249,7 @@ from inference.infer_tool import Svc
 import soundfile
 import numpy as np
 
-MODELS_DIR = "models"
+MODELS_DIR = r"C:\Users\mihei\Desktop\so-vits-svc\models"
 
 def get_speakers():
   speakers = []
@@ -303,108 +297,114 @@ existing_files = []
 slice_db = -40
 wav_format = 'wav'
 
-class InferenceGui():
-  def __init__(self):
-    self.speakers = get_speakers()
-    self.speaker_list = [x["name"] for x in self.speakers]
-    self.speaker_box = widgets.Dropdown(
-        options = self.speaker_list
-    )
-    display(self.speaker_box)
+class InferenceGui(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Inference GUI")
+        
+        # Get speakers
+        self.speakers = get_speakers()
+        
+        # Create widgets
+        self.speaker_label = QLabel("Speaker:")
+        self.speaker_box = QComboBox()
+        self.speaker_box.addItems([x["name"] for x in self.speakers])
+        
+        self.trans_label = QLabel("Transpose:")
+        self.trans_tx = QLineEdit()
+        self.trans_tx.setText("0")
+        
+        self.cluster_ratio_label = QLabel("Clustering Ratio:")
+        self.cluster_ratio_tx = QLineEdit()
+        self.cluster_ratio_tx.setText("0.0")
+        
+        self.noise_scale_label = QLabel("Noise Scale:")
+        self.noise_scale_tx = QLineEdit()
+        self.noise_scale_tx.setText("0.4")
+        
+        self.auto_pitch_ck = QCheckBox("Auto pitch f0 (do not use for singing)")
+        
+        self.convert_btn = QPushButton("Convert")
+        self.convert_btn.clicked.connect(self.convert)
+        
+        self.clean_btn = QPushButton("Delete all audio files")
+        self.clean_btn.clicked.connect(self.clean)
+        
+        # Create layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.speaker_label)
+        layout.addWidget(self.speaker_box)
+        layout.addWidget(self.trans_label)
+        layout.addWidget(self.trans_tx)
+        layout.addWidget(self.cluster_ratio_label)
+        layout.addWidget(self.cluster_ratio_tx)
+        layout.addWidget(self.noise_scale_label)
+        layout.addWidget(self.noise_scale_tx)
+        layout.addWidget(self.auto_pitch_ck)
+        layout.addWidget(self.convert_btn)
+        layout.addWidget(self.clean_btn)
+        
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
 
-    def convert_cb(btn):
-      self.convert()
-    def clean_cb(btn):
-      self.clean()
+    def convert(self):
+        trans = int(self.trans_tx.text())
+        speaker = next(x for x in self.speakers if x["name"] == self.speaker_box.currentText())
+        svc_model = Svc(speaker["model_path"], speaker["cfg_path"], cluster_model_path=speaker["cluster_path"])
+        
+        input_filepaths = [f for f in glob.glob('/content/**/*.*', recursive=True)
+                            if f not in existing_files and
+                            any(f.endswith(ex) for ex in ['.wav', '.flac', '.mp3', '.ogg', '.opus'])]
+        for name in input_filepaths:
+            print("Converting " + os.path.split(name)[-1])
+            infer_tool.format_wav(name)
 
-    self.convert_btn = widgets.Button(description="Convert")
-    self.convert_btn.on_click(convert_cb)
-    self.clean_btn = widgets.Button(description="Delete all audio files")
-    self.clean_btn.on_click(clean_cb)
+            wav_path = str(Path(name).with_suffix('.wav'))
+            wav_name = Path(name).stem
+            chunks = slicer.cut(wav_path, db_thresh=slice_db)
+            audio_data, audio_sr = slicer.chunks2audio(wav_path, chunks)
 
-    self.trans_tx = widgets.IntText(value=0, description='Transpose')
-    self.cluster_ratio_tx = widgets.FloatText(value=0.0, 
-      description='Clustering Ratio')
-    self.noise_scale_tx = widgets.FloatText(value=0.4, 
-      description='Noise Scale')
-    self.auto_pitch_ck = widgets.Checkbox(value=False, description=
-      'Auto pitch f0 (do not use for singing)')
+            audio = []
+            for (slice_tag, data) in audio_data:
+                print(f'#=====segment start, {round(len(data)/audio_sr, 3)}s======')
+                length = int(np.ceil(len(data) / audio_sr * svc_model.target_sample))
+                
+                if slice_tag:
+                    print('jump empty segment')
+                    _audio = np.zeros(length)
+                else:
+                    pad_len = int(audio_sr * 0.5)
+                    data = np.concatenate([np.zeros([pad_len]), data, np.zeros([pad_len])])
+                    raw_path = io.BytesIO()
+                    soundfile.write(raw_path, data, audio_sr, format="wav")
+                    raw_path.seek(0)
+                    _cluster_ratio = 0.0
+                    if speaker["cluster_path"] != "":
+                        _cluster_ratio = float(self.cluster_ratio_tx.text())
+                    out_audio, out_sr = svc_model.infer(
+                        speaker["name"], trans, raw_path,
+                        cluster_infer_ratio=_cluster_ratio,
+                        auto_predict_f0=self.auto_pitch_ck.isChecked(),
+                        noice_scale=float(self.noise_scale_tx.text()))
+                    _audio = out_audio.cpu().numpy()
+                    pad_len = int(svc_model.target_sample * 0.5)
+                    _audio = _audio[pad_len:-pad_len]
+                audio.extend(list(infer_tool.pad_array(_audio, length)))
+                
+            res_path = os.path.join('/content/', f'{wav_name}_{trans}_key_{speaker["name"]}.{wav_format}')
+            soundfile.write(res_path, audio, svc_model.target_sample, format=wav_format)
+            # display(Audio(res_path, autoplay=True))  # Удалено, так как это специфично для Jupyter Notebook
 
-    display(self.trans_tx)
-    display(self.cluster_ratio_tx)
-    display(self.noise_scale_tx)
-    display(self.auto_pitch_ck)
-    display(self.convert_btn)
-    display(self.clean_btn)
+    def clean(self):
+        input_filepaths = [f for f in glob.glob('/content/**/*.*', recursive=True)
+                            if f not in existing_files and
+                            any(f.endswith(ex) for ex in ['.wav', '.flac', '.mp3', '.ogg', '.opus'])]
+        for f in input_filepaths:
+            os.remove(f)
 
-  def convert(self):
-    trans = int(self.trans_tx.value)
-    speaker = next(x for x in self.speakers if x["name"] == 
-          self.speaker_box.value)
-    spkpth2 = os.path.join(os.getcwd(),speaker["model_path"])
-    print(spkpth2)
-    print(os.path.exists(spkpth2))
-
-    svc_model = Svc(speaker["model_path"], speaker["cfg_path"], 
-      cluster_model_path=speaker["cluster_path"])
-    
-    input_filepaths = [f for f in glob.glob('/content/**/*.*', recursive=True)
-     if f not in existing_files and 
-     any(f.endswith(ex) for ex in ['.wav','.flac','.mp3','.ogg','.opus'])]
-    for name in input_filepaths:
-      print("Converting "+os.path.split(name)[-1])
-      infer_tool.format_wav(name)
-
-      wav_path = str(Path(name).with_suffix('.wav'))
-      wav_name = Path(name).stem
-      chunks = slicer.cut(wav_path, db_thresh=slice_db)
-      audio_data, audio_sr = slicer.chunks2audio(wav_path, chunks)
-
-      audio = []
-      for (slice_tag, data) in audio_data:
-          print(f'#=====segment start, '
-              f'{round(len(data)/audio_sr, 3)}s======')
-          
-          length = int(np.ceil(len(data) / audio_sr *
-              svc_model.target_sample))
-          
-          if slice_tag:
-              print('jump empty segment')
-              _audio = np.zeros(length)
-          else:
-              # Padding "fix" for noise
-              pad_len = int(audio_sr * 0.5)
-              data = np.concatenate([np.zeros([pad_len]),
-                  data, np.zeros([pad_len])])
-              raw_path = io.BytesIO()
-              soundfile.write(raw_path, data, audio_sr, format="wav")
-              raw_path.seek(0)
-              _cluster_ratio = 0.0
-              if speaker["cluster_path"] != "":
-                _cluster_ratio = float(self.cluster_ratio_tx.value)
-              out_audio, out_sr = svc_model.infer(
-                  speaker["name"], trans, raw_path,
-                  cluster_infer_ratio = _cluster_ratio,
-                  auto_predict_f0 = bool(self.auto_pitch_ck.value),
-                  noice_scale = float(self.noise_scale_tx.value))
-              _audio = out_audio.cpu().numpy()
-              pad_len = int(svc_model.target_sample * 0.5)
-              _audio = _audio[pad_len:-pad_len]
-          audio.extend(list(infer_tool.pad_array(_audio, length)))
-          
-      res_path = os.path.join('/content/',
-          f'{wav_name}_{trans}_key_'
-          f'{speaker["name"]}.{wav_format}')
-      soundfile.write(res_path, audio, svc_model.target_sample,
-          format=wav_format)
-      display(Audio(res_path, autoplay=True)) # display audio file
-    pass
-
-  def clean(self):
-     input_filepaths = [f for f in glob.glob('/content/**/*.*', recursive=True)
-     if f not in existing_files and 
-     any(f.endswith(ex) for ex in ['.wav','.flac','.mp3','.ogg','.opus'])]
-     for f in input_filepaths:
-       os.remove(f)
-
-inference_gui = InferenceGui()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    inference_gui = InferenceGui()
+    inference_gui.show()
+    sys.exit(app.exec_())
