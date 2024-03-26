@@ -196,6 +196,7 @@ print("Finished!")
 
 
 import re
+# Получение URL-адреса модели из параметра или загрузка из Hugging Face
 model_url = "https://mega.nz/file/Dr40kCQI#G3bEWPvUvTa9SBJKQt7rETgcFds4ssnJF0nGN9aAXTk" #@param {"type": "string"}
 if "huggingface.co" in model_url.lower():
   download([re.sub(r"/blob/","/resolve/",model_url)], 
@@ -203,22 +204,25 @@ if "huggingface.co" in model_url.lower():
 else:
   download([model_url])
 
+
+# Извлечение ZIP-архивов с моделями в директорию "models"
 import glob, os, shutil
 from pathlib import Path
+
 os.makedirs('models', exist_ok=True)
-model_zip_paths = glob.glob(r'C:\Users\mihei\Desktop\*.zip', recursive=True)
+model_zip_paths = glob.glob(r'C:\Users\mihei\Desktop\so-vits-svc\models*.zip', recursive=True) #Не уверен, что тут нужен именно этот путь!?
 
 for model_zip_path in model_zip_paths:
     print("extracting zip",model_zip_path)
     output_dir = os.path.join(r'C:\Users\mihei\Desktop\so-vits-svc\models',os.path.basename(os.path.splitext(model_zip_path)[0]).replace(" ","_"))
     
-    # clean and create output dir
+    # clean and create output dir (код для извлечения ZIP-архивов)
     if os.path.exists(output_dir):
       shutil.rmtree(output_dir)
     os.mkdir(output_dir)
     input_base = os.path.dirname(model_zip_path)
 
-    # clean input dir (if user stopped an earlier extract and we have dirty files)
+    # очистить входной каталог (если пользователь остановил более раннюю распаковку и у нас есть грязные файлы)
     ckpts_pre = glob.glob(os.path.join(input_base,'**/*.pth'),recursive=True)
     jsons_pre = glob.glob(os.path.join(input_base,'**/config.json'),recursive=True)
     for cpkt in ckpts_pre:
@@ -226,7 +230,7 @@ for model_zip_path in model_zip_paths:
     for json in jsons_pre:
       os.remove(json)
 
-    # do the extract
+    # делаем извлечение
     extract(model_zip_path)
     ckpts = glob.glob(os.path.join(input_base,'**/*.pth'),recursive=True)
     jsons = glob.glob(os.path.join(input_base,'**/config.json'),recursive=True)
@@ -251,12 +255,15 @@ import numpy as np
 
 MODELS_DIR = r"C:\Users\mihei\Desktop\so-vits-svc\models"
 
+# Получение списка доступных моделей (динамиков)
+
 def get_speakers():
   speakers = []
   for _,dirs,_ in os.walk(MODELS_DIR):
     for folder in dirs:
+        # ... (код для получения информации о модели)
       cur_speaker = {}
-      # Look for G_****.pth
+      # Ищем G_****.pth
       g = glob.glob(os.path.join(MODELS_DIR,folder,'G_*.pth'))
       if not len(g):
         print("Skipping "+folder+", no G_*.pth")
@@ -264,7 +271,7 @@ def get_speakers():
       cur_speaker["model_path"] = g[0]
       cur_speaker["model_folder"] = folder
 
-      # Look for *.pt (clustering model)
+      # Ищем *.pt (модель кластеризации)
       clst = glob.glob(os.path.join(MODELS_DIR,folder,'*.pt'))
       if not len(clst):
         print("Note: No clustering model found for "+folder)
@@ -272,7 +279,7 @@ def get_speakers():
       else:
         cur_speaker["cluster_path"] = clst[0]
 
-      # Look for config.json
+      # Ищем config.json
       cfg = glob.glob(os.path.join(MODELS_DIR,folder,'*.json'))
       if not len(cfg):
         print("Skipping "+folder+", no config json")
@@ -291,8 +298,9 @@ def get_speakers():
 
     return sorted(speakers, key=lambda x:x["name"].lower())
 
+# Настройка логгирования и других параметров
 logging.getLogger('numba').setLevel(logging.WARNING)
-chunks_dict = infer_tool.read_temp("inference/chunks_temp.json")
+chunks_dict = infer_tool.read_temp("inference/chunks_temp.json") #Не уверен, что это такое?... Откуда это нужно брать...
 existing_files = []
 slice_db = -40
 wav_format = 'wav'
@@ -302,10 +310,10 @@ class InferenceGui(QMainWindow):
         super().__init__()
         self.setWindowTitle("Inference GUI")
         
-        # Get speakers
+        # Получение списка моделей (динамиков)
         self.speakers = get_speakers()
         
-        # Create widgets
+         # Создание виджетов GUI (комбобокс, поля ввода, кнопки и т.д.)
         self.speaker_label = QLabel("Speaker:")
         self.speaker_box = QComboBox()
         self.speaker_box.addItems([x["name"] for x in self.speakers])
@@ -330,7 +338,7 @@ class InferenceGui(QMainWindow):
         self.clean_btn = QPushButton("Delete all audio files")
         self.clean_btn.clicked.connect(self.clean)
         
-        # Create layout
+        # Создание макета и центрального виджета
         layout = QVBoxLayout()
         layout.addWidget(self.speaker_label)
         layout.addWidget(self.speaker_box)
@@ -348,6 +356,7 @@ class InferenceGui(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
+    # Функция для преобразования аудиофайлов
     def convert(self):
         trans = int(self.trans_tx.text())
         speaker = next(x for x in self.speakers if x["name"] == self.speaker_box.currentText())
@@ -358,8 +367,7 @@ class InferenceGui(QMainWindow):
                             any(f.endswith(ex) for ex in ['.wav', '.flac', '.mp3', '.ogg', '.opus'])]
         for name in input_filepaths:
             print("Converting " + os.path.split(name)[-1])
-            infer_tool.format_wav(name)
-
+            infer_tool.format_wav(name) # ... (код для преобразования аудиофайлов)
             wav_path = str(Path(name).with_suffix('.wav'))
             wav_name = Path(name).stem
             chunks = slicer.cut(wav_path, db_thresh=slice_db)
@@ -395,14 +403,16 @@ class InferenceGui(QMainWindow):
             res_path = os.path.join(r'C:\Users\mihei\Desktop\Arlekino', f'{wav_name}_{trans}_key_{speaker["name"]}.{wav_format}')
             soundfile.write(res_path, audio, svc_model.target_sample, format=wav_format)
             # display(Audio(res_path, autoplay=True))  # Удалено, так как это специфично для Jupyter Notebook
-
+            
+    # Функция для удаления аудиофайлов
     def clean(self):
         input_filepaths = [f for f in glob.glob(r'C:\Users\mihei\Desktop\Arlekino\*.*', recursive=True)
                             if f not in existing_files and
                             any(f.endswith(ex) for ex in ['.wav', '.flac', '.mp3', '.ogg', '.opus'])]
         for f in input_filepaths:
             os.remove(f)
-
+            
+# Создание и запуск приложения GUI
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     inference_gui = InferenceGui()
