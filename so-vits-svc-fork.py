@@ -3,6 +3,7 @@ import tarfile
 import os
 from zipfile import ZipFile
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QLabel, QLineEdit, QCheckBox, QPushButton
+import io  # Импортируем модуль io для работы с BytesIO
 
 # taken from https://github.com/CookiePPP/cookietts/blob/master/CookieTTS/utils/dataset/extract_unknown.py
 def extract(path):
@@ -361,13 +362,13 @@ class InferenceGui(QMainWindow):
         trans = int(self.trans_tx.text())
         speaker = next(x for x in self.speakers if x["name"] == self.speaker_box.currentText())
         svc_model = Svc(speaker["model_path"], speaker["cfg_path"], cluster_model_path=speaker["cluster_path"])
-        
-        input_filepaths = [f for f in glob.glob(r'C:\Users\mihei\Desktop\Arlekino\*.*', recursive=True)
+
+        input_filepaths = [f for f in glob.glob(r'C:\Users\mihei\Desktop\Arlekino\vocals.*', recursive=True)
                             if f not in existing_files and
                             any(f.endswith(ex) for ex in ['.wav', '.flac', '.mp3', '.ogg', '.opus'])]
         for name in input_filepaths:
             print("Converting " + os.path.split(name)[-1])
-            infer_tool.format_wav(name) # ... (код для преобразования аудиофайлов)
+            infer_tool.format_wav(name)
             wav_path = str(Path(name).with_suffix('.wav'))
             wav_name = Path(name).stem
             chunks = slicer.cut(wav_path, db_thresh=slice_db)
@@ -377,14 +378,14 @@ class InferenceGui(QMainWindow):
             for (slice_tag, data) in audio_data:
                 print(f'#=====segment start, {round(len(data)/audio_sr, 3)}s======')
                 length = int(np.ceil(len(data) / audio_sr * svc_model.target_sample))
-                
+
                 if slice_tag:
                     print('jump empty segment')
                     _audio = np.zeros(length)
                 else:
                     pad_len = int(audio_sr * 0.5)
                     data = np.concatenate([np.zeros([pad_len]), data, np.zeros([pad_len])])
-                    raw_path = io.BytesIO()
+                    raw_path = io.BytesIO()  # Создаем объект BytesIO
                     soundfile.write(raw_path, data, audio_sr, format="wav")
                     raw_path.seek(0)
                     _cluster_ratio = 0.0
@@ -399,9 +400,10 @@ class InferenceGui(QMainWindow):
                     pad_len = int(svc_model.target_sample * 0.5)
                     _audio = _audio[pad_len:-pad_len]
                 audio.extend(list(infer_tool.pad_array(_audio, length)))
-                
+
             res_path = os.path.join(r'C:\Users\mihei\Desktop\Arlekino', f'{wav_name}_{trans}_key_{speaker["name"]}.{wav_format}')
             soundfile.write(res_path, audio, svc_model.target_sample, format=wav_format)
+            print(f"Converted audio saved to {res_path}")  # Добавляем вывод сообщения о сохранении файла
             # display(Audio(res_path, autoplay=True))  # Удалено, так как это специфично для Jupyter Notebook
             
     # Функция для удаления аудиофайлов
