@@ -196,7 +196,7 @@ print("Finished!")
 
 
 import re
-model_url = "https://mega.nz/file/P7hWwCoQ#s0OICnRbTpcUjUIS7iQPIlYwBVelZXzm_-1LLPSUd2Y" #@param {"type": "string"}
+model_url = "https://mega.nz/file/Dr40kCQI#G3bEWPvUvTa9SBJKQt7rETgcFds4ssnJF0nGN9aAXTk" #@param {"type": "string"}
 if "huggingface.co" in model_url.lower():
   download([re.sub(r"/blob/","/resolve/",model_url)], 
            filenames=[os.path.join(os.getcwd(),model_url.split("/")[-1])])
@@ -206,7 +206,7 @@ else:
 import glob, os, shutil
 from pathlib import Path
 os.makedirs('models', exist_ok=True)
-model_zip_paths = glob.glob('/content/**/*.zip', recursive=True)
+model_zip_paths = glob.glob(r'C:\Users\mihei\Desktop\*.zip', recursive=True)
 
 for model_zip_path in model_zip_paths:
     print("extracting zip",model_zip_path)
@@ -353,7 +353,7 @@ class InferenceGui(QMainWindow):
         speaker = next(x for x in self.speakers if x["name"] == self.speaker_box.currentText())
         svc_model = Svc(speaker["model_path"], speaker["cfg_path"], cluster_model_path=speaker["cluster_path"])
         
-        input_filepaths = [f for f in glob.glob('/content/**/*.*', recursive=True)
+        input_filepaths = [f for f in glob.glob(r'C:\Users\mihei\Desktop\Arlekino\*.*', recursive=True)
                             if f not in existing_files and
                             any(f.endswith(ex) for ex in ['.wav', '.flac', '.mp3', '.ogg', '.opus'])]
         for name in input_filepaths:
@@ -392,12 +392,12 @@ class InferenceGui(QMainWindow):
                     _audio = _audio[pad_len:-pad_len]
                 audio.extend(list(infer_tool.pad_array(_audio, length)))
                 
-            res_path = os.path.join('/content/', f'{wav_name}_{trans}_key_{speaker["name"]}.{wav_format}')
+            res_path = os.path.join(r'C:\Users\mihei\Desktop\Arlekino', f'{wav_name}_{trans}_key_{speaker["name"]}.{wav_format}')
             soundfile.write(res_path, audio, svc_model.target_sample, format=wav_format)
             # display(Audio(res_path, autoplay=True))  # Удалено, так как это специфично для Jupyter Notebook
 
     def clean(self):
-        input_filepaths = [f for f in glob.glob('/content/**/*.*', recursive=True)
+        input_filepaths = [f for f in glob.glob(r'C:\Users\mihei\Desktop\Arlekino\*.*', recursive=True)
                             if f not in existing_files and
                             any(f.endswith(ex) for ex in ['.wav', '.flac', '.mp3', '.ogg', '.opus'])]
         for f in input_filepaths:
