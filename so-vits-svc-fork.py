@@ -315,28 +315,28 @@ class InferenceGui(QMainWindow):
         self.speakers = get_speakers()
         
          # Создание виджетов GUI (комбобокс, поля ввода, кнопки и т.д.)
-        self.speaker_label = QLabel("Speaker:")
+        self.speaker_label = QLabel("Модели голоса:")
         self.speaker_box = QComboBox()
         self.speaker_box.addItems([x["name"] for x in self.speakers])
         
-        self.trans_label = QLabel("Transpose:")
+        self.trans_label = QLabel("Высота тона (хороший диапазон от -12 до 12):")
         self.trans_tx = QLineEdit()
         self.trans_tx.setText("0")
         
-        self.cluster_ratio_label = QLabel("Clustering Ratio:")
+        self.cluster_ratio_label = QLabel("Соотношение между звучанием, похожим на тембр цели, \nчеткостью и артикулированностью, чтобы найти подходящий компромисс:")
         self.cluster_ratio_tx = QLineEdit()
         self.cluster_ratio_tx.setText("0.0")
         
-        self.noise_scale_label = QLabel("Noise Scale:")
+        self.noise_scale_label = QLabel("Если выходной сигнал звучит гулко, попробуйте увеличить масштаб шума:")
         self.noise_scale_tx = QLineEdit()
         self.noise_scale_tx.setText("0.4")
         
-        self.auto_pitch_ck = QCheckBox("Auto pitch f0 (do not use for singing)")
+        self.auto_pitch_ck = QCheckBox("Автоматическое предсказание высоты тона. \nОставьте этот флажок не отмеченным, если вы конвертируете певческий голос.")
         
-        self.convert_btn = QPushButton("Convert")
+        self.convert_btn = QPushButton("Конвертировать")
         self.convert_btn.clicked.connect(self.convert)
         
-        self.clean_btn = QPushButton("Delete all audio files")
+        self.clean_btn = QPushButton("Удалить все аудиофайлы")
         self.clean_btn.clicked.connect(self.clean)
         
         # Создание макета и центрального виджета
@@ -363,7 +363,7 @@ class InferenceGui(QMainWindow):
         speaker = next(x for x in self.speakers if x["name"] == self.speaker_box.currentText())
         svc_model = Svc(speaker["model_path"], speaker["cfg_path"], cluster_model_path=speaker["cluster_path"])
 
-        input_filepaths = [f for f in glob.glob(r'C:\Users\mihei\Desktop\Arlekino\vocals.*', recursive=True)
+        input_filepaths = [f for f in glob.glob(r'C:\Users\mihei\Desktop\Цой\vocals.*', recursive=True)
                             if f not in existing_files and
                             any(f.endswith(ex) for ex in ['.wav', '.flac', '.mp3', '.ogg', '.opus'])]
         for name in input_filepaths:
@@ -401,14 +401,14 @@ class InferenceGui(QMainWindow):
                     _audio = _audio[pad_len:-pad_len]
                 audio.extend(list(infer_tool.pad_array(_audio, length)))
 
-            res_path = os.path.join(r'C:\Users\mihei\Desktop\Arlekino', f'{wav_name}_{trans}_key_{speaker["name"]}.{wav_format}')
+            res_path = os.path.join(r'C:\Users\mihei\Desktop\Цой', f'{wav_name}_{trans}_key_{speaker["name"]}.{wav_format}')
             soundfile.write(res_path, audio, svc_model.target_sample, format=wav_format)
             print(f"Converted audio saved to {res_path}")  # Добавляем вывод сообщения о сохранении файла
             # display(Audio(res_path, autoplay=True))  # Удалено, так как это специфично для Jupyter Notebook
             
     # Функция для удаления аудиофайлов
     def clean(self):
-        input_filepaths = [f for f in glob.glob(r'C:\Users\mihei\Desktop\Arlekino\*.*', recursive=True)
+        input_filepaths = [f for f in glob.glob(r'C:\Users\mihei\Desktop\Цой\*.*', recursive=True)
                             if f not in existing_files and
                             any(f.endswith(ex) for ex in ['.wav', '.flac', '.mp3', '.ogg', '.opus'])]
         for f in input_filepaths:
