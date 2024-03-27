@@ -71,3 +71,7 @@
 ## Источники
 
 [Оглавление](#Оглавление)
+[Spleeter](https://github.com/deezer/spleeter?tab=readme-ov-file)
+[so-vits-svc 4.0](https://colab.research.google.com/drive/1z31ZfcisCXCSGA5jeid0UNjiHb9oupuV#scrollTo=7FHg8Gx8ihDk)
+[pydub](https://github.com/jiaaro/pydub)
+[Pydub: удобная библиотека для работы с аудиофайлами](https://pydocs.ru/pydub/#:~:text=Pydub%20—%20это%20Python-библиотека%2C%20которая,применение%20эффектов%20и%20многое%20другое)
