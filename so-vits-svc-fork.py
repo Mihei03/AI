@@ -13,7 +13,10 @@ from pathlib import Path
 from inference import infer_tool, slicer
 from inference.infer_tool import Svc
 
-# taken from https://github.com/CookiePPP/cookietts/blob/master/CookieTTS/utils/dataset/extract_unknown.py
+CURRENT_DIR = os.path.dirname(__file__)
+SOVITS_DIR = f"{CURRENT_DIR}/so-vits-svc"
+MODELS_DIR = f"{SOVITS_DIR}/models"
+
 def extract(path):
     if path.endswith(".zip"):
         with ZipFile(path, 'r') as zipObj:
@@ -181,12 +184,8 @@ class HFModels:
             "generator_path": os.path.join(target_dir,gen_pt),
             "cluster_path": clust_out}
 
-# Example usage
-# vul_models = HFModels()
-# print(vul_models.list_models())
-# print("Applejack (singing)" in vul_models.list_models())
-# vul_models.download_model("Applejack (singing)","models/Applejack (singing)")
-os.chdir(r'C:\Users\mihei\Desktop\AI\so-vits-svc') # force working-directory to so-vits-svc - this line is just for safety and is probably not required
+
+os.chdir(SOVITS_DIR) # force working-directory to so-vits-svc - this line is just for safety and is probably not required
 download(["https://huggingface.co/therealvul/so-vits-svc-4.0-init/resolve/main/checkpoint_best_legacy_500.pt"], filenames=["hubert/checkpoint_best_legacy_500.pt"])
 print("Finished!")
 
@@ -195,18 +194,18 @@ print("Finished!")
 model_url = "https://mega.nz/file/Dr40kCQI#G3bEWPvUvTa9SBJKQt7rETgcFds4ssnJF0nGN9aAXTk" #@param {"type": "string"}
 if "huggingface.co" in model_url.lower():
     download([re.sub(r"/blob/","/resolve/",model_url)], 
-           filenames=[os.path.join(os.getcwd(),model_url.split("/")[-1])])
+           filenames=[os.path.join(os.getcwd(), model_url.split("/")[-1])])
 else:
     download([model_url])
 
 
 # Извлечение ZIP-архивов с моделями в директорию "models"
 os.makedirs('models', exist_ok=True)
-model_zip_paths = glob.glob(r'C:\Users\mihei\Desktop\AI\so-vits-svc\models*.zip', recursive=True) #Не уверен, что тут нужен именно этот путь!?
+model_zip_paths = glob.glob(f'{SOVITS_DIR}/models*.zip', recursive=True) #Не уверен, что тут нужен именно этот путь!?
 
 for model_zip_path in model_zip_paths:
     print("extracting zip",model_zip_path)
-    output_dir = os.path.join(r'C:\Users\mihei\Desktop\AI\so-vits-svc\models',os.path.basename(os.path.splitext(model_zip_path)[0]).replace(" ","_"))
+    output_dir = os.path.join(f'{SOVITS_DIR}/models', os.path.basename(os.path.splitext(model_zip_path)[0]).replace(" ","_"))
     
     # clean and create output dir (код для извлечения ZIP-архивов)
     if os.path.exists(output_dir):
@@ -231,8 +230,6 @@ for model_zip_path in model_zip_paths:
     for json in jsons:
         shutil.move(json,os.path.join(output_dir,os.path.basename(json)))
 
-
-MODELS_DIR = r"C:\Users\mihei\Desktop\AI\so-vits-svc\models"
 
 # Получение списка доступных моделей (динамиков)
 
@@ -290,7 +287,7 @@ class InferenceGui(QMainWindow):
         super().__init__()
         self.setWindowTitle("Inference GUI")
         
-        self.models_dir = r"C:\Users\mihei\Desktop\AI\so-vits-svc\models"
+        self.models_dir = MODELS_DIR
         self.speakers = get_speakers(self.models_dir)
         
         # Создание виджетов GUI (комбобокс, поля ввода, кнопки и т.д.)
