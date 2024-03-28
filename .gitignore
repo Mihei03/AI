@@ -10,6 +10,7 @@ __pycache__/
 # Distribution / packaging
 megatools-1.11.1.20230212-win64/
 so-vits-svc/
+sovits/
 raw/
 hf_vul_models/
 .Python

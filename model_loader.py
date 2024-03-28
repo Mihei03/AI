@@ -6,12 +6,10 @@ import shutil
 import tqdm
 import urllib.request
 import gdown
-
-from megatools_loader import *
-
+import megadown
 
 CURRENT_DIR = os.path.dirname(__file__)
-SOVITS_DIR = f"{CURRENT_DIR}/so-vits-svc"
+SOVITS_DIR = f"{CURRENT_DIR}/sovits"
 MODELS_DIR = f"{SOVITS_DIR}/models"
 
 def request_url_with_progress_bar(url, filename):
@@ -45,7 +43,7 @@ def download(urls, dataset='', filenames=None, force_dl=False, username='', pass
             assert 'https://drive.google.com/uc?id=' in url, 'Google Drive links should follow the format "https://drive.google.com/uc?id=1eQAnaoDBGQZldPVk-nzgYzRbcPSmnpv6".\nWhere id=XXXXXXXXXXXXXXXXX is the Google Drive Share ID.'
             gdown.download(url, filename, quiet=False)
         elif 'mega.nz' in url:
-            megadown(url, filename)
+            megadown.download(url, filename)
         else:
             #urllib.request.urlretrieve(url, filename=filename) # no progress bar
             request_url_with_progress_bar(url, filename) # with progress bar

@@ -10,11 +10,13 @@ import soundfile
 def convert(input_path, trans_text, speakers, 
             speakerbox_text, cluster_ratio_text,isAutoPitchChecked,
             noise_scale_text,save_path, slice_db):
+    
     if not input_path:
-            return
+            return False
         
     trans = int(trans_text)
     speaker = next(x for x in speakers if x["name"] == speakerbox_text)
+
     svc_model = Svc(speaker["model_path"], speaker["cfg_path"], cluster_model_path=speaker["cluster_path"])
 
     input_filepaths = [input_path]
