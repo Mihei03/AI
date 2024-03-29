@@ -19,5 +19,3 @@ def extract(file_path, target_dir):
             print(f"Не удалось распаковать RAR-архив: {e}")
     else:
         raise ValueError("Неизвестный формат архива.")
-
-extract(r"C:\Users\mihei\Desktop\ИС.rar", r"C:\Users\mihei\Documents")

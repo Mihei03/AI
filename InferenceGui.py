@@ -12,7 +12,7 @@ from model_loader import download
 
 CURRENT_DIR = os.path.dirname(__file__)
 SOVITS_DIR = f"{CURRENT_DIR}/sovits"
-MODELS_DIR = f"{SOVITS_DIR}/models"
+MODELS_DIR = f"{CURRENT_DIR}/models"
 
 
 def get_speakers(models_dir):
@@ -61,10 +61,6 @@ class InferenceGui(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Inference GUI")
-
-        download(["https://huggingface.co/therealvul/so-vits-svc-4.0-init/resolve/main/checkpoint_best_legacy_500.pt"], filenames=[f"{SOVITS_DIR}/hubert/checkpoint_best_legacy_500.pt"])
-        model_url = "https://mega.nz/file/Dr40kCQI#G3bEWPvUvTa9SBJKQt7rETgcFds4ssnJF0nGN9aAXTk"
-        download([model_url])
 
         logging.getLogger('numba').setLevel(logging.WARNING)
         self.existing_files = []
