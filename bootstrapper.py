@@ -52,7 +52,7 @@ def _load_kanye_model():
     extractor.extract(downloaded_filename, MODELS_DIR)
 
 
-def load_dependencies():
+def initial_setup():
     _load_sovits()
     _load_hubert_model()
     _load_kanye_model()
