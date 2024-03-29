@@ -223,7 +223,7 @@ class MainWindow(QMainWindow):
             self.setMinimumSize(QSize(200, 100))
 
 
-if __name__ == "__main__":
+def show():
     app = QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
