@@ -4,21 +4,16 @@ import io
 import json
 import logging
 import os
-from pathlib import Path
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QLabel, QLineEdit, QCheckBox, QPushButton, QFileDialog
-from PyQt5.QtCore import Qt
-from inference import infer_tool, slicer
-from inference.infer_tool import Svc
-import numpy as np
-import soundfile
-import converter
+import sovits.converter as converter
 
 from model_loader import download
 
 CURRENT_DIR = os.path.dirname(__file__)
-SOVITS_DIR = f"{CURRENT_DIR}/so-vits-svc"
+SOVITS_DIR = f"{CURRENT_DIR}/sovits"
 MODELS_DIR = f"{SOVITS_DIR}/models"
+
 
 def get_speakers(models_dir):
     speakers = []
@@ -72,7 +67,6 @@ class InferenceGui(QMainWindow):
         download([model_url])
 
         logging.getLogger('numba').setLevel(logging.WARNING)
-        self.chunks_dict = infer_tool.read_temp(f"{SOVITS_DIR}/inference/chunks_temp.json") #Не уверен, что это такое?... Откуда это нужно брать...
         self.existing_files = []
         self.slice_db = -40
         self.wav_format = 'wav'
@@ -203,6 +197,7 @@ class InferenceGui(QMainWindow):
             
     # Функция для преобразования аудиофайлов
     def convert(self):
+        os.chdir(f"{os.getcwd()}/sovits")
         result = converter.convert(self.input_path_tx.text(), 
                           self.trans_tx.text(),
                           self.speakers,
@@ -213,6 +208,7 @@ class InferenceGui(QMainWindow):
                           self.save_path_tx.text(),
                           self.slice_db)
         self.clean_btn.setEnabled(result)
+        os.chdir(os.pardir)
             
     # Функция для удаления аудиофайлов
     def clean(self):

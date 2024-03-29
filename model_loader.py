@@ -3,7 +3,7 @@ from os.path import exists
 import os
 import re
 import shutil
-import tqdm
+from tqdm import tqdm
 import urllib.request
 import gdown
 import megadown
