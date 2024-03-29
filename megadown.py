@@ -1,3 +1,4 @@
+from pathlib import Path
 import subprocess
 from time import sleep
 import urllib.request
@@ -41,20 +42,24 @@ def __download_megatools():
 
     return binary_folder
 
-def download(download_link, filename='.', verbose=False):
-    """Use megatools binary executable to download files and folders from MEGA.nz ."""
-    filename = ' --path "'+os.path.abspath(filename)+'"' if filename else ""
-    wd_old = os.getcwd()
-    binary_folder = os.path.abspath(__download_megatools())
+def download(url, target_directory='.', verbose=False):
+    if target_directory:
+         target_directory = f"--path {Path.absolute(target_directory)}"
 
-    os.chdir(binary_folder)
-    try:
-        if platform == "linux" or platform == "linux2":
-            subprocess.call(f'./megatools dl{filename}{" --debug http" if verbose else ""} {download_link}', shell=True)
-        elif platform == "win32":
-            subprocess.call(f'megatools.exe dl{filename}{" --debug http" if verbose else ""} {download_link}', shell=True)
-    except:
-        os.chdir(wd_old) # don't let user stop download without going back to correct directory first
-        raise
-    os.chdir(wd_old)
-    return filename
+    binaries_map = {
+         "linux": "./megatools",
+         "linux2": "./megatools",
+         "win32": "megatools.exe"
+    }
+
+    binary_folder = Path(__download_megatools()).resolve()
+    binary_name = binaries_map[platform]
+    binary_path = Path(binary_folder, binary_name)
+    
+    verbose_arg = ""
+    if verbose:
+        verbose_arg = "--debug http"
+
+    subprocess.call(f"{binary_path} dl {url} {target_directory} {verbose_arg}", shell=True)
+    
+    return target_directory

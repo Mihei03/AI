@@ -15,6 +15,7 @@ sovits/*
 !sovits/__init__.py
 !sovits/converter.py
 raw/
+models/
 hf_vul_models/
 .Python
 develop-eggs/

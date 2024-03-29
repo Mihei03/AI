@@ -4,9 +4,10 @@ from pathlib import Path
 from git import RemoteProgress
 from tqdm import tqdm
 import model_loader
+import extractor
 
 SOVITS_DIR = Path(Path.cwd(), "sovits")
-
+MODELS_DIR = Path(Path.cwd(), "models")
 
 class __GitCloneProgress(RemoteProgress):
     def __init__(self):
@@ -43,9 +44,15 @@ def _load_hubert_model():
     
 
 def _load_kanye_model():
-    model_loader.download(["https://mega.nz/file/Dr40kCQI#G3bEWPvUvTa9SBJKQt7rETgcFds4ssnJF0nGN9aAXTk"])
+    if not Path.exists(MODELS_DIR):
+        Path.mkdir(MODELS_DIR)
 
+    downloaded_filename = Path(MODELS_DIR, "kanye.zip")
+    model_loader.download(["https://mega.nz/file/Dr40kCQI#G3bEWPvUvTa9SBJKQt7rETgcFds4ssnJF0nGN9aAXTk"], filenames=[downloaded_filename])
+    extractor.extract(downloaded_filename, MODELS_DIR)
 
 
 def load_dependencies():
+    _load_sovits()
+    _load_hubert_model()
     _load_kanye_model()

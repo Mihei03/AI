@@ -43,6 +43,7 @@ def download(urls, dataset='', filenames=None, force_dl=False, username='', pass
             assert 'https://drive.google.com/uc?id=' in url, 'Google Drive links should follow the format "https://drive.google.com/uc?id=1eQAnaoDBGQZldPVk-nzgYzRbcPSmnpv6".\nWhere id=XXXXXXXXXXXXXXXXX is the Google Drive Share ID.'
             gdown.download(url, filename, quiet=False)
         elif 'mega.nz' in url:
+            print(filename)
             megadown.download(url, filename)
         else:
             #urllib.request.urlretrieve(url, filename=filename) # no progress bar
