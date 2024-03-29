@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 import sys
 
+import torch
+
 sys.path.append(os.path.dirname(__file__))
 
 from inference import infer_tool, slicer
@@ -14,7 +16,8 @@ def convert(input_path, trans_text, speakers,
             speakerbox_text, cluster_ratio_text,isAutoPitchChecked,
             noise_scale_text,save_path, slice_db):
     
-    
+    torch.cuda.empty_cache()
+
     if not input_path:
             return False
         
