@@ -17,7 +17,7 @@ if __name__ == "__main__":
     
     if "initial_setup_done" not in config_data or config_data["initial_setup_done"] == "True":
         bootstrapper.initial_setup()
-        config_data["first_load"] = "True"
+        config_data["initial_setup_done"] = "True"
         with open('config.json', 'w') as f:
             json.dump(config_data, f)
     
