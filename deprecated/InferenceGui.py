@@ -6,9 +6,7 @@ import logging
 import os
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QLabel, QLineEdit, QCheckBox, QPushButton, QFileDialog
-import sovits.converter as converter
 
-from model_loader import download
 
 CURRENT_DIR = os.path.dirname(__file__)
 SOVITS_DIR = f"{CURRENT_DIR}/sovits"

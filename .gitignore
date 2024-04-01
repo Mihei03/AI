@@ -8,6 +8,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+temp/
 megatools-1.11.1.20230212-win64/
 so-vits-svc/
 !sovits
