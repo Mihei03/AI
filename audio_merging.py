@@ -4,8 +4,9 @@ from pathlib import Path
 def merge(folder_path, result_path):
     tracks = []
     for f in folder_path.glob("*.wav"):
-        segment = AudioSegment.from_file(f.absolute(), format="wav")
-        tracks.append(segment)
+        if f.name != "vocals.wav":
+            segment = AudioSegment.from_file(f.absolute(), format="wav")
+            tracks.append(segment)
 
     if len(tracks) == 0:
         return

@@ -70,21 +70,22 @@ if __name__ == "__main__":
         config_data["initial_setup_done"] = "True"
         with open('config.json', 'w') as f:
             json.dump(config_data, f)
-    
 
-    print(Path.cwd())
-    input_file = Path(Path.cwd(), "песни", "Цой.mp3")
-    temp_path = Path(Path.cwd(), "temp", "Цой")
+
+    # MainWindow.show()
+
+    input_file = Path(Path.cwd(), "песни", "duhast.mp3")
+    temp_path = Path(Path.cwd(), "temp", "duhast")
     temp_vocal_path = Path(temp_path, "vocals.wav")
 
     speakers = get_speakers(Path(Path.cwd(), "models"))
-    
     output_path = Path(Path.cwd(), "output")
 
+    separate_temp(2, input_file)
+
     os.chdir("./sovits")
-    # from sovits.audio_conversion import convert
-    # convert(temp_vocal_path, "0", speakers, "aimodel", "0.0", False, "0.9", temp_path, -40)
+    from sovits.audio_conversion import convert
+    convert(temp_vocal_path, "0", speakers, "aimodel", "0.0", False, "0.9", temp_path, -40)
     os.chdir("../")
 
-    print(Path.cwd())
     merge(temp_path, temp_path)
