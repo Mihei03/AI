@@ -1,5 +1,8 @@
-import io
 import os
+
+os.chdir("./sovits")
+
+import io
 from pathlib import Path
 import sys
 
@@ -19,6 +22,8 @@ def convert(input_path, trans_text, speakers,
     torch.cuda.empty_cache()
 
     if not input_path:
+            torch.cuda.empty_cache()
+            os.chdir("..")
             return False
         
     trans = int(trans_text)
@@ -66,4 +71,6 @@ def convert(input_path, trans_text, speakers,
         soundfile.write(res_path, audio, svc_model.target_sample, format="wav")
         print(f"Converted audio saved to {res_path}")  # Добавляем вывод сообщения о сохранении файла
 
+        torch.cuda.empty_cache()
+        os.chdir("..")
         return True 

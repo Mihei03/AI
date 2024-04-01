@@ -4,37 +4,51 @@ from time import sleep
 import urllib.request
 from sys import *
 import os
-
-from extract import extract
+from zipfile import ZipFile
+import tarfile
 
 WIN64_URL = "https://megatools.megous.com/builds/builds/megatools-1.11.1.20230212-win64.zip"
 WIN32_URL = "https://megatools.megous.com/builds/builds/megatools-1.11.1.20230212-win32.zip"
 LINUX_URL = "https://megatools.megous.com/builds/builds/megatools-1.11.1.20230212-linux-x86_64.tar.gz"
 
+def extract(path):
+    
+    if path.endswith(".zip"):
+        with ZipFile(path, 'r') as zipObj:
+           zipObj.extractall(os.path.split(path)[0])
+    elif path.endswith(".tar.gz"):
+        tar = tarfile.open(path, "r:gz")
+        tar.extractall(os.path.split(path)[0])
+        tar.close()
+    else:
+        raise NotImplementedError(f"{path} extension not implemented.")
 
 def __download_megatools():
-    if platform == "linux" or platform == "linux2":
-            dl_url = LINUX_URL
-    elif platform == "darwin":
-        raise NotImplementedError('MacOS not supported.')
-    elif platform == "win32":
-            dl_url = WIN64_URL
-    else:
-        raise NotImplementedError ('Unknown Operating System.')
+    url_map = {
+         "linux": LINUX_URL,
+         "linux2": LINUX_URL,
+         "win32": WIN64_URL
+    }
 
-    dlname = dl_url.split("/")[-1]
+    if platform not in url_map:
+        raise NotImplementedError ('Current Operating System is not supported')
+    
+    url = url_map[platform]
+
+    dlname = url.split("/")[-1]
     if dlname.endswith(".zip"):
         binary_folder = dlname[:-4] # remove .zip
     elif dlname.endswith(".tar.gz"):
         binary_folder = dlname[:-7] # remove .tar.gz
     else:
         raise NameError('downloaded megatools has unknown archive file extension!')
-
+    
     if not os.path.exists(binary_folder):
         print('"megatools" not found. Downloading...')
         if not os.path.exists(dlname):
-            urllib.request.urlretrieve(dl_url, dlname)
+            urllib.request.urlretrieve(url, dlname)
         assert os.path.exists(dlname), 'failed to download.'
+        
         extract(dlname)
         sleep(0.10)
         os.unlink(dlname)

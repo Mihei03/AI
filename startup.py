@@ -4,7 +4,7 @@ from pathlib import Path
 from git import RemoteProgress
 from tqdm import tqdm
 import model_loader
-import extractor
+import extraction
 
 SOVITS_DIR = Path(Path.cwd(), "sovits")
 MODELS_DIR = Path(Path.cwd(), "models")
@@ -18,7 +18,6 @@ class __GitCloneProgress(RemoteProgress):
         self.pbar.total = max_count
         self.pbar.n = cur_count
         self.pbar.refresh()
-
 
 def _load_sovits():
     if Path.exists(SOVITS_DIR):
@@ -49,7 +48,7 @@ def _load_kanye_model():
 
     downloaded_filename = Path(MODELS_DIR, "kanye.zip")
     model_loader.download(["https://mega.nz/file/Dr40kCQI#G3bEWPvUvTa9SBJKQt7rETgcFds4ssnJF0nGN9aAXTk"], filenames=[downloaded_filename])
-    extractor.extract(downloaded_filename, MODELS_DIR)
+    extraction.extract(downloaded_filename, MODELS_DIR)
 
 
 def initial_setup():

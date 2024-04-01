@@ -187,3 +187,4 @@ pretrained_models/
 .mp3
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+*.code-workspace
