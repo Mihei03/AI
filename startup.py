@@ -10,14 +10,27 @@ import extraction
 SOVITS_DIR = Path(Path.cwd(), "sovits")
 MODELS_DIR = Path(Path.cwd(), "models")
 
-def _load_sovits():
-    sovits_url = "https://github.com/effusiveperiscope/so-vits-svc/archive/refs/heads/eff-4.0.zip"
-    sovits_download = str(Path(Path.cwd(), "sovitsarch.zip"))
-    model_loader.download([sovits_url], filenames=[sovits_download])
+class __GitCloneProgress(RemoteProgress):
+    def __init__(self):
+        super().__init__()
+        self.pbar = tqdm()
 
-    extraction.extract(sovits_download, "./")
+    def update(self, op_code, cur_count, max_count=None, message=''):
+        self.pbar.total = max_count
+        self.pbar.n = cur_count
+        self.pbar.refresh()
+
+def _load_sovits():
+    if Path.exists(SOVITS_DIR):
+        print("so-vits-svc folder already exists")
+        return
     
-    Path.rename(Path("so-vits-svc-eff-4.0"), "sovits")
+    Path.mkdir(SOVITS_DIR)    
+    sovits_url = "https://github.com/effusiveperiscope/so-vits-svc"
+    branch_name = "eff-4.0"
+
+    repo = Repo()
+    repo.clone_from(sovits_url, SOVITS_DIR, branch=branch_name, progress=__GitCloneProgress())
 
     converter_path = Path(Path.cwd(), "audio_conversion.py")
     shutil.copy(converter_path, SOVITS_DIR)
