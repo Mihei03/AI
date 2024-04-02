@@ -74,6 +74,8 @@ if __name__ == "__main__":
 
     # MainWindow.show()
 
+    
+
     input_file = Path(Path.cwd(), "песни", "duhast.mp3")
     temp_path = Path(Path.cwd(), "temp", "duhast")
     temp_vocal_path = Path(temp_path, "vocals.wav")
@@ -84,7 +86,7 @@ if __name__ == "__main__":
     separate_temp(2, input_file)
 
     os.chdir("./sovits")
-    from sovits.audio_conversion import convert
+    from audio_conversion import convert
     convert(temp_vocal_path, "0", speakers, "aimodel", "0.0", False, "0.9", temp_path, -40)
     os.chdir("../")
 
