@@ -1,27 +1,32 @@
-import io
 import os
 from pathlib import Path
+import io
 import sys
-
 import torch
+import numpy as np
+import soundfile
 
+print(Path.cwd())
 sys.path.append(os.path.dirname(__file__))
 
 from inference import infer_tool, slicer
 from inference.infer_tool import Svc
-import numpy as np
-import soundfile
 
 def convert(input_path, trans_text, speakers, 
             speakerbox_text, cluster_ratio_text,isAutoPitchChecked,
             noise_scale_text,save_path, slice_db):
     
+
+    
+    
     torch.cuda.empty_cache()
 
     if not input_path:
+            torch.cuda.empty_cache()
             return False
         
     trans = int(trans_text)
+    print(speakers)
     speaker = next(x for x in speakers if x["name"] == speakerbox_text)
 
     svc_model = Svc(speaker["model_path"], speaker["cfg_path"], cluster_model_path=speaker["cluster_path"])
@@ -66,4 +71,5 @@ def convert(input_path, trans_text, speakers,
         soundfile.write(res_path, audio, svc_model.target_sample, format="wav")
         print(f"Converted audio saved to {res_path}")  # Добавляем вывод сообщения о сохранении файла
 
+        torch.cuda.empty_cache()
         return True 

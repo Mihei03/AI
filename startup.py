@@ -32,7 +32,7 @@ def _load_sovits():
     repo = Repo()
     repo.clone_from(sovits_url, SOVITS_DIR, branch=branch_name, progress=__GitCloneProgress())
 
-    converter_path = Path(Path.cwd(), "converter.py")
+    converter_path = Path(Path.cwd(), "audio_conversion.py")
     shutil.copy(converter_path, SOVITS_DIR)
 
     print("so-vits-svc cloned")
