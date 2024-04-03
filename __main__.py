@@ -1,56 +1,61 @@
-import copy
 import glob
 import os
 from pathlib import Path
-import sys
 import MainWindow
 import startup
 import json
 from audio_separation import separate_temp
-
 from audio_merging import merge
 
 
 def get_speakers(models_dir):
     speakers = []
-    for _, dirs, _ in os.walk(models_dir):
-        for folder in dirs:
-            # ... (код для получения информации о модели)
-            cur_speaker = {}
+    
+    for _, directories, _ in os.walk(models_dir):
+        for folder in directories:
+            current_speaker = {}
+            current_path = Path(models_dir, folder)
+    
             # Ищем G_****.pth
-            g = glob.glob(os.path.join(models_dir, folder, 'G_*.pth'))
-            if not len(g):
-                print("Skipping " + folder + ", no G_*.pth")
+            pth_path_template = str(current_path / "G_*.pth")
+            pth_paths = glob.glob(pth_path_template)
+            if len(pth_paths) == 0:
+                print(f"Skipping {folder} no G_*.pth")
                 continue
-            cur_speaker["model_path"] = g[0]
-            cur_speaker["model_folder"] = folder
+
+            current_speaker["model_path"] = pth_paths[0]
+            current_speaker["model_folder"] = folder
 
             # Ищем *.pt (модель кластеризации)
-            clst = glob.glob(os.path.join(models_dir, folder, '*.pt'))
-            if not len(clst):
-                print("Note: No clustering model found for " + folder)
-                cur_speaker["cluster_path"] = ""
+            pt_path_template = str(current_path / "*.pt")
+            cluster_models = glob.glob(pt_path_template)
+            if len(cluster_models) == 0:
+                print(f"Note: No clustering model found for {folder}")
+                current_speaker["cluster_path"] = ""
             else:
-                cur_speaker["cluster_path"] = clst[0]
+                current_speaker["cluster_path"] = cluster_models[0]
 
             # Ищем config.json
-            cfg = glob.glob(os.path.join(models_dir, folder, '*.json'))
-            if not len(cfg):
-                print("Skipping " + folder + ", no config json")
+            json_path_template = str(current_path / "*.json")
+            configs = glob.glob(json_path_template)
+            if len(configs) == 0:
+                print(f"Skipping {folder}, no config json")
                 continue
-            cur_speaker["cfg_path"] = cfg[0]
-            with open(cur_speaker["cfg_path"]) as f:
+
+            current_speaker["cfg_path"] = configs[0]
+            with open(current_speaker["cfg_path"]) as f:
                 try:
                     cfg_json = json.loads(f.read())
                 except Exception as e:
                     print("Malformed config json in " + folder)
                 for name, i in cfg_json["spk"].items():
-                    cur_speaker["name"] = name
-                    cur_speaker["id"] = i
+                    current_speaker["name"] = name
+                    current_speaker["id"] = i
                     if not name.startswith('.'):
-                        speakers.append(copy.copy(cur_speaker))
+                        speakers.append(current_speaker)
 
     return sorted(speakers, key=lambda x:x["name"].lower())
+
 
 if __name__ == "__main__":
     try:
@@ -87,6 +92,7 @@ if __name__ == "__main__":
     temp_vocal_path = Path(temp_path, "vocals.wav")
 
     speakers = get_speakers(Path(Path.cwd(), "models"))
+
     output_path = Path(Path.cwd(), "output")
 
     print("start separation", input_file)
