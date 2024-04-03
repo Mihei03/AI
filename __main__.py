@@ -65,29 +65,41 @@ if __name__ == "__main__":
         with open('config.json', 'w') as f:
             json.dump(config_data, f)
     
-    if "initial_setup_done" not in config_data or config_data["initial_setup_done"] == "True":
-        startup.initial_setup()
-        config_data["initial_setup_done"] = "True"
-        with open('config.json', 'w') as f:
-            json.dump(config_data, f)
+    if "initial_setup_done" not in config_data or config_data["initial_setup_done"] != "True":
+        try:
+            startup.initial_setup()
+            config_data["initial_setup_done"] = "True"
+            with open('config.json', 'w') as f:
+                json.dump(config_data, f)
+        except Exception as e:
+            print("an error occured while running startup")
+            print(e)
+            exit()
 
 
     # MainWindow.show()
 
-    
+    name = "Paranoid.mp3"
 
-    input_file = Path(Path.cwd(), "песни", "duhast.mp3")
-    temp_path = Path(Path.cwd(), "temp", "duhast")
+    input_file = Path(Path.cwd(), "песни", name)
+    temp_path = Path(Path.cwd(), "temp", name[:-4])
+
     temp_vocal_path = Path(temp_path, "vocals.wav")
 
     speakers = get_speakers(Path(Path.cwd(), "models"))
     output_path = Path(Path.cwd(), "output")
 
+    print("start separation", input_file)
     separate_temp(2, input_file)
+    print("separation done")
 
+    print("start conversion", temp_vocal_path)
     os.chdir("./sovits")
-    from audio_conversion import convert
-    convert(temp_vocal_path, "0", speakers, "aimodel", "0.0", False, "0.9", temp_path, -40)
+    from sovits.audio_conversion import convert
+    convert(temp_vocal_path, "0", speakers, "aimodel", "0.1", False, "0.4", temp_path, -40)
     os.chdir("../")
+    print("end conversion")
 
+    print("start merge")
     merge(temp_path, temp_path)
+    print("end merge")
