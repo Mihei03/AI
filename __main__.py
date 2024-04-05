@@ -133,10 +133,9 @@ if __name__ == "__main__":
     separate_temp(2, input_file)
     split_audio(temp_path / "vocals.wav", temp_raw_path)
     
-
     os.chdir("./sovits")
     from sovits.audio_conversion import convert
-    convert(temp_raw_path, temp_path, speakers[speaker_select], noise_scale=0.9, transpose=3)
+    convert(temp_raw_path, temp_path, speakers[speaker_select], noise_scale=1)
     os.chdir("../")
 
     merge(temp_path, temp_path)

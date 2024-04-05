@@ -35,8 +35,6 @@ def convert(input_path, save_path, speaker, transpose : int = 0, cluster_ratio :
         wav_name = Path(name).stem
         chunks = slicer.cut(wav_path, db_thresh=slice_db)
         audio_data, audio_sr = slicer.chunks2audio(wav_path, chunks)
-
-        audio_data = sorted(audio_data)
         
         audio = []
         for (slice_tag, data) in audio_data:
