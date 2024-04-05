@@ -1,11 +1,16 @@
 import glob
 import os
 from pathlib import Path
+import shutil
+import subprocess
 import MainWindow
 import startup
 import json
 from audio_separation import separate_temp
+from audio_separation import split_audio
 from audio_merging import merge
+import soundfile
+import librosa
 
 
 def get_speakers(models_dir):
@@ -84,28 +89,54 @@ if __name__ == "__main__":
 
     # MainWindow.show()
 
-    name = "Paranoid.mp3"
+    if Path.exists(Path.cwd() / "temp"):
+        shutil.rmtree(Path.cwd() / "temp")
 
-    input_file = Path(Path.cwd(), "песни", name)
-    temp_path = Path(Path.cwd(), "temp", name[:-4])
+    Path.mkdir(Path.cwd() / "temp", exist_ok=True)
 
-    temp_vocal_path = Path(temp_path, "vocals.wav")
+    folder_path = str(Path.cwd() / "песни" / "*.mp3")
+    print("Песни:")
+    files = glob.glob(folder_path)
+    for file in files:
+        print(file.split('\\')[-1])
 
-    speakers = get_speakers(Path(Path.cwd(), "models"))
+    name = input("song name in песни folder with extension => ")
+    if not name: 
+        print("name cannot be empty")
+        exit()
 
-    output_path = Path(Path.cwd(), "output")
+    input_file = Path.cwd() / "песни" / name
+    if not Path.exists(input_file):
+        print(f"{input_file} doesn't exists")
+        exit()
+    
+    if not Path.is_file(input_file):
+        print(f"{input_file} is not a file")
+        exit()
+    
+    models_path = Path.cwd() / "models"
+    temp_path = Path.cwd() / "temp" / name[:-4]
+    temp_raw_path = temp_path / "raw"
 
-    print("start separation", input_file)
+    speakers = get_speakers(models_path)
+
+    for i in range(0, len(speakers)):
+        print(f"[{i}]", speakers[i]["name"])
+
+    speaker_select = int(input("speaker id => "))
+    if speaker_select < 0 or speaker_select >= len(speakers):
+        print("invalid input")
+        exit()
+    
+    output_path = Path.cwd() / "output"
+
     separate_temp(2, input_file)
-    print("separation done")
+    split_audio(temp_path / "vocals.wav", temp_raw_path)
+    
 
-    print("start conversion", temp_vocal_path)
     os.chdir("./sovits")
     from sovits.audio_conversion import convert
-    convert(temp_vocal_path, "0", speakers, "aimodel", "0.1", False, "0.4", temp_path, -40)
+    convert(temp_raw_path, temp_path, speakers[speaker_select], noise_scale=0.9, transpose=3)
     os.chdir("../")
-    print("end conversion")
 
-    print("start merge")
     merge(temp_path, temp_path)
-    print("end merge")
