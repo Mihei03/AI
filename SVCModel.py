@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         subprocess.run(["pip", "install", "pyworld"])
         subprocess.run(["pip", "install", "praat-parselmouth"])
         subprocess.run(["python", "-m", "pip", "install", "--upgrade", "pip"])
-        subprocess.run(["pip", "install", "fairseq==0.12.2"])
+        subprocess.run(["pip", "install", "fairseq==0.12.2", "--user"])
         subprocess.run(["pip", "install", "librosa==0.8.1"])
         subprocess.run(["pip", "install", "numpy==1.23.5"])
 
@@ -62,9 +62,9 @@ class MainWindow(QMainWindow):
         else:
             print("checkpoint_best_legacy_500.pt уже существует.")
 
-        os.makedirs("sovits/Mydataset/44k/", exist_ok=True)
-        g_0_path = "sovits/Mydataset/44k/G_0.pth"
-        d_0_path = "sovits/Mydataset/44k/D_0.pth"
+        os.makedirs("sovits/logs/44k/", exist_ok=True)
+        g_0_path = "sovits/logs/44k/G_0.pth"
+        d_0_path = "sovits/logs/44k/D_0.pth"
 
         if not os.path.exists(g_0_path):
             print("Загрузка G_0.pth...")
@@ -92,29 +92,37 @@ class MainWindow(QMainWindow):
             os.makedirs("sovits/dataset_raw/", exist_ok=True)
 
             # Проверка на наличие файлов в папке назначения
-            dataset_dest_path = "sovits/dataset_raw/YouModel"
-            if os.path.exists(dataset_dest_path):
+            dataset_dest_path_raw = "sovits/dataset_raw/YouModel"
+            if os.path.exists(dataset_dest_path_raw):
                 print("Папка назначения уже существует. Пропускаем копирование.")
             else:
-                shutil.copytree(dataset_path, dataset_dest_path)
+                shutil.copytree(dataset_path, dataset_dest_path_raw)
+
+            dataset_dest_path_44k = "sovits/dataset/44k/YouModel"
+            if os.path.exists(dataset_dest_path_44k):
+                print("Папка назначения уже существует. Пропускаем копирование.")
+            else:
+                shutil.copytree(dataset_path, dataset_dest_path_44k)
 
             os.chdir("sovits")
-            subprocess.run(["python", "resample.py"])
-            subprocess.run(["python", "preprocess_flist_config.py"])
-            subprocess.run(["python", "preprocess_hubert_f0.py"])
+            subprocess.run(["python", "resample.py"], shell=True)
+            print("Ресэмплинг завершен.")
+            
+            subprocess.run(["python", "preprocess_flist_config.py"], shell=True)
+            print("Создание списков файлов завершено.")
 
-            os.makedirs("sovits/dataset/", exist_ok=True)
-            shutil.make_archive("sovits/dataset/44k/YouModel", "zip", "sovits/dataset")
+            #Работа над этим файлом
+            subprocess.run(["python", "preprocess_hubert_f0.py"], shell=True)
+            print("Предобработка Hubert и F0 завершена.")
+
+            print("&&&&")
 
     def start_training(self):
         clone = self.clone_input.text()
         tensorboard_on = self.tensorboard_checkbox.isChecked()
-
         os.chdir("sovits")
-
         if tensorboard_on:
-            subprocess.Popen(["tensorboard", "--logdir", f"logs/{clone}"])
-
+            subprocess.Popen(["tensorboard", "--logdir", f"logs/{clone}"], shell=True)
         subprocess.run(["python", "train.py", "-c", "configs/config.json", "-m", clone])
 
 if __name__ == '__main__':
