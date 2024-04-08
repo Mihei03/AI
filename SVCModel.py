@@ -105,7 +105,7 @@ class MainWindow(QMainWindow):
                 shutil.copytree(dataset_path, dataset_dest_path_44k)
 
             os.chdir("sovits")
-            subprocess.run(["python", "resample.py"], shell=True)
+            subprocess.run(["python", "resample.py"], shell=True,  check=False)
             print("Ресэмплинг завершен.")
             
             subprocess.run(["python", "preprocess_flist_config.py"], shell=True)
