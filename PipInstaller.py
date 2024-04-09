@@ -44,11 +44,17 @@ def install_from_requirements(requirements_file):
                 print(f"Ошибка при установке {line}: {e}")
 
 # Использование
-#install_pip()
-#subprocess.run(["pip", "install", "gitpython"])
-#subprocess.run(["pip", "install", "gdown"])
-#subprocess.run(["pip", "install", "patool"])
-#requirements_file = "C:/Users/mihei/Desktop/so-vits-svc-eff-4.0/requirements_win.txt"
-#install_from_requirements(requirements_file)
+install_pip()
+subprocess.run(["pip", "install", "gitpython"])
+subprocess.run(["pip", "install", "gdown"])
+subprocess.run(["pip", "install", "patool"])
+requirements_file = "C:/Users/mihei/Desktop/so-vits-svc-eff-4.0/requirements_win.txt"
+install_from_requirements(requirements_file)
 subprocess.run(["pip", "install", "spleeter"])
 subprocess.run(["pip", "install", "ffmpeg-python"])
+#subprocess.run(["pip", "install", "pyworld"]) Вроде есть в txt фалйле, но почему то у меня не подгрузило
+#subprocess.run(["pip", "install", "praat-parselmouth"]) Вроде есть в txt фалйле, но почему то у меня не подгрузило
+#install_pip() Просто нужно, иначе пипы полетят
+#subprocess.run(["pip", "install", "fairseq==0.12.2", "--user"])  Вроде есть в txt фалйле, но почему то у меня не подгрузило
+#subprocess.run(["pip", "install", "librosa==0.8.1"]) Разные версии librosa, ну хз-хз
+#subprocess.run(["pip", "install", "numpy==1.23.5"])  Разные версии numpy, ну хз-хз

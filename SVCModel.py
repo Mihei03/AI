@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
         self.tensorboard_checkbox = QCheckBox("Включить Tensorboard")
         self.tensorboard_checkbox.setChecked(True)
 
-        self.install_button = QPushButton("Установить зависимости")
+        self.install_button = QPushButton("Загрузка нужных файлов")
         self.install_button.clicked.connect(self.install_dependencies)
 
         self.prepare_button = QPushButton("Подготовить датасет")
@@ -41,13 +41,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def install_dependencies(self):
-        subprocess.run(["pip", "install", "pyworld"])
-        subprocess.run(["pip", "install", "praat-parselmouth"])
-        subprocess.run(["python", "-m", "pip", "install", "--upgrade", "pip"])
-        subprocess.run(["pip", "install", "fairseq==0.12.2", "--user"])
-        subprocess.run(["pip", "install", "librosa==0.8.1"])
-        subprocess.run(["pip", "install", "numpy==1.23.5"])
-
         # Создание директории hubert/, если она не существует
         os.makedirs("sovits/hubert/", exist_ok=True)
 
