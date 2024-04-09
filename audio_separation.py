@@ -2,9 +2,9 @@ from pathlib import Path
 import subprocess
 from pydub import AudioSegment
 
-def split_audio(audio_path, output_directory):
+def split_audio(audio_path, output_directory, fragment_length_s = 15):
     audio = AudioSegment.from_file(audio_path)
-    fragment_length_ms = 15 * 1000
+    fragment_length_ms = fragment_length_s * 1000
     fragments = []
     for i in range(0, len(audio), fragment_length_ms):
         fragment = audio[i:i+fragment_length_ms]
