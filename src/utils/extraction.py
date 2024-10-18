@@ -14,8 +14,10 @@ def extract(file_path, target_dir):
             tar_file.extractall(target_dir)
     elif file_path.endswith(".rar"):
         try:
-            patoolib.extract_archive(file_path, target_dir)
+            patoolib.extract_archive(file_path, outdir=str(target_dir))
         except Exception as e:
             print(f"Не удалось распаковать RAR-архив: {e}")
     else:
         raise ValueError("Неизвестный формат архива.")
+
+__all__ = ['extract']

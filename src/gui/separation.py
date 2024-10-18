@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QComboBox
-from PyQt5.QtWidgets import QMessageBox, QHBoxLayout
+from PyQt5.QtWidgets import QMessageBox, QHBoxLayout, QSpacerItem, QSizePolicy
 from pathlib import Path
 import shutil
 
@@ -27,13 +27,17 @@ class SeparationWindow(QWidget):
 
         song_layout = QHBoxLayout()
         self.song_label = QLabel("Выбранная песня: ")
+        self.song_label.setStyleSheet("font-size: 16px;")
         song_layout.addWidget(self.song_label)
         self.select_song_button = QPushButton("Выбор песни")
+        self.select_song_button.setStyleSheet("font-size: 16px;")
         self.select_song_button.clicked.connect(self.select_song)
         song_layout.addWidget(self.select_song_button)
         layout.addLayout(song_layout)
+        layout.addStretch(10)
 
         self.split_label = QLabel("Выберите вариант обработки:")
+        self.split_label.setStyleSheet("font-size: 16px;")
         layout.addWidget(self.split_label)
 
         self.split_options = QComboBox()
@@ -42,29 +46,60 @@ class SeparationWindow(QWidget):
             "4 - Vocals / drums / bass / other separation",
             "5 - Vocals / drums / bass / piano / other separation"
         ])
+        self.split_options.setStyleSheet("font-size: 16px;")
         layout.addWidget(self.split_options)
 
+        # Добавляем небольшой отступ после комбобокса
+        layout.addStretch(5)
+
+        # Центрирование и увеличение кнопки "Сохранить отдельно"
         save_layout = QHBoxLayout()
+        save_layout.addStretch()
         self.save_button = QPushButton("Сохранить отдельно")
+        self.save_button.setStyleSheet("""
+            QPushButton {
+                font-size: 16px;
+                padding: 10px 20px;
+                min-width: 200px;
+                min-height: 40px;
+            }
+        """)
         self.save_button.clicked.connect(self.save_file)
         save_layout.addWidget(self.save_button)
-        self.save_path_label = QLabel()
-        save_layout.addWidget(self.save_path_label)
+        save_layout.addStretch()
         layout.addLayout(save_layout)
+        
+        self.save_path_label = QLabel()
+        layout.addWidget(self.save_path_label)
+
+        # Добавляем отступ перед кнопками навигации
+        layout.addSpacing(20)
 
         button_layout = QHBoxLayout()
         self.back_button = QPushButton("Назад")
+        self.back_button.setStyleSheet("font-size: 16px;")
         button_layout.addWidget(self.back_button)
         button_layout.addStretch()
         self.next_button = QPushButton("Далее")
+        self.next_button.setStyleSheet("font-size: 16px;")
         button_layout.addWidget(self.next_button)
         layout.addLayout(button_layout)
 
         self.setLayout(layout)
 
     def select_song(self):
-        file_dialog = QFileDialog()
-        self.song_path, _ = file_dialog.getOpenFileName(self, "Выбрать песню", "", "Audio Files (*.mp3 *.wav)")
+        default_dir = os.path.join(os.getcwd(), "src", "SOVITS", "песни")
+        # Создаем директорию, если она не существует
+        os.makedirs(default_dir, exist_ok=True)
+        
+        file_dialog = QFileDialog(self)
+        file_dialog.setDirectory(default_dir)  # Устанавливаем начальную директорию
+        self.song_path, _ = file_dialog.getOpenFileName(
+            self,
+            "Выбрать песню",
+            default_dir,
+            "Audio Files (*.mp3 *.wav)"
+        )
         if self.song_path:
             self.song_label.setText(f"Выбранная песня: {self.song_path}")
 

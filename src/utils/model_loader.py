@@ -5,12 +5,12 @@ import shutil
 from tqdm import tqdm
 import urllib.request
 import gdown
-import megadown
+from pathlib import Path
 
 # Обновляем базовую директорию
-BASE_DIR = os.path.join(os.path.dirname(__file__), "src", "SOVITS")
+BASE_DIR = Path(__file__).resolve().parent.parent / "SOVITS"
 SOVITS_DIR = BASE_DIR
-MODELS_DIR = os.path.join(SOVITS_DIR, "models")
+MODELS_DIR = BASE_DIR / "models"
 
 def request_url_with_progress_bar(url, filename):
     class DownloadProgressBar(tqdm):
@@ -40,7 +40,8 @@ def download(urls, dataset='', filenames=None, force_dl=False, username='', pass
             gdown.download(url, filename, quiet=False)
         elif 'mega.nz' in url:
             print(filename)
-            megadown.download(url, filename)
+            from megadown import download
+            download(url, filename)
         else:
             request_url_with_progress_bar(url, filename)
 

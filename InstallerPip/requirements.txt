@@ -77,3 +77,4 @@ gdown==5.2.0
 patool==1.12
 faiss-cpu==1.9.0
 spleeter==2.4.0
+traceback-with-variables

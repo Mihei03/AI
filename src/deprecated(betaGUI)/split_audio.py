@@ -1,7 +1,7 @@
 import sys
 import subprocess
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QSpinBox, QFileDialog, QMessageBox, QLineEdit, QComboBox  
-from PyQt6.QtCore import QDir, QStandardPaths
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QSpinBox, QFileDialog, QMessageBox, QLineEdit, QComboBox  
+from PyQt5.QtCore import QDir, QStandardPaths
 
 class AudioProcessorApp(QWidget):
     def __init__(self):
