@@ -1,61 +1,102 @@
-from pathlib import Path
+import os
 import subprocess
 import sys
+from pathlib import Path
+
+def get_parent_dir():
+    """Получение пути к родительской директории"""
+    current_dir = Path(__file__).resolve().parent  # Текущая директория (InstallerPip)
+    return current_dir.parent  # Родительская директория
+
+def create_virtual_environment():
+    """Создание виртуальной среды в родительской директории, если она не существует"""
+    parent_dir = get_parent_dir()
+    venv_path = parent_dir / "AI_venv"
+    
+    if not venv_path.exists():
+        print(f"Создание виртуальной среды 'AI_venv' в директории {parent_dir}...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "venv", str(venv_path)])
+            print("Виртуальная среда успешно создана.")
+        except subprocess.CalledProcessError as e:
+            print(f"Ошибка при создании виртуальной среды: {e}")
+            sys.exit(1)
+    else:
+        print("Виртуальная среда 'AI_venv' уже существует.")
+
+def get_venv_python():
+    """Получение пути к исполняемому файлу Python из виртуальной среды"""
+    parent_dir = get_parent_dir()
+    # Определяем путь в зависимости от операционной системы
+    if sys.platform == "win32":
+        python_path = parent_dir / "AI_venv/Scripts/python.exe"
+    else:
+        python_path = parent_dir / "AI_venv/bin/python"
+    return str(python_path.absolute())
 
 def install_pip():
-    py_executable = sys.executable
+    """Установка pip в виртуальной среде, если необходимо"""
+    python_exe = get_venv_python()
     get_pip_url = "https://bootstrap.pypa.io/get-pip.py"
+    parent_dir = get_parent_dir()
+    get_pip_path = parent_dir / "get-pip.py"
 
     try:
         # Загрузка скрипта get-pip.py
-        subprocess.check_call([py_executable, "-c", "import urllib.request; urllib.request.urlretrieve('{}', 'get-pip.py')".format(get_pip_url)])
+        subprocess.check_call([
+            python_exe, 
+            "-c", 
+            f"import urllib.request; urllib.request.urlretrieve('{get_pip_url}', '{str(get_pip_path)}')"
+        ])
         # Установка pip
-        subprocess.check_call([py_executable, "get-pip.py"])
-        print("pip успешно установлен.")
+        subprocess.check_call([python_exe, str(get_pip_path)])
+        print("pip успешно установлен в виртуальной среде.")
     except subprocess.CalledProcessError as e:
         print(f"Ошибка при установке pip: {e}")
+        sys.exit(1)
     finally:
         # Удаление временного файла get-pip.py
         try:
-            import os
-            os.remove("get-pip.py")
+            get_pip_path.unlink()
         except:
             pass
-        
-    #subprocess.run(["pip", "install", "gitpython"])
-    #subprocess.run(["pip", "install", "gdown"])
-    #subprocess.run(["pip", "install", "patool"])
-    requirements_file = "D:/все_папки/AI/InstallerPip/requirements_win.txt"
-    install_from_requirements(requirements_file)
-    subprocess.run(["pip", "install", "spleeter"])
-    subprocess.run(["pip", "install", "ffmpeg-python"])
-    subprocess.run(["pip", "install", "pyworld"]) #Вроде есть в txt фалйле, но почему то у меня не подгрузило
-    subprocess.run(["pip", "install", "praat-parselmouth"]) #Вроде есть в txt фалйле, но почему то у меня не подгрузило
-    #install_pip() #Просто нужно, иначе пипы полетят
-    #subprocess.run(["pip", "install", "fairseq==0.12.2"])  #Вроде есть в txt фалйле, но почему то у меня не подгрузило
-    subprocess.run(["pip", "install", "librosa==0.8.1"]) #Разные версии librosa, ну хз-хз
-    subprocess.run(["pip", "install", "numpy==1.23.5"])  #Разные версии numpy, ну хз-хз
 
-def install_from_requirements(requirements_file):
-    import pip
-    if not Path(requirements_file).exists():
-        print(f"Файл {requirements_file} не существует.")
-        return
+def install_requirements():
+    """Установка пакетов из файла requirements.txt"""
+    python_exe = get_venv_python()
+    current_dir = Path(__file__).resolve().parent
+    requirements_file = current_dir / "requirements.txt"
 
-    with open(requirements_file, "r") as f:
-        requirements = f.read().splitlines()
+    # Проверка наличия файла requirements.txt
+    if not requirements_file.exists():
+        print(f"Ошибка: файл {requirements_file} не найден в директории InstallerPip.")
+        sys.exit(1)
 
-    for line in requirements:
-        line = line.strip()
-        if line and not line.startswith("#") and not line.startswith("--"):
-            try:
-                if hasattr(pip, 'main'):
-                    pip.main(['install', line])
-                else:
-                    pip._internal.main(['install', line])
-                print(f"Успешно установлен пакет: {line}")
-            except Exception as e:
-                print(f"Ошибка при установке {line}: {e}")
+    print("Установка зависимостей из файла requirements.txt...")
+    try:
+        # Установка всех пакетов из requirements.txt
+        subprocess.check_call([
+            python_exe, 
+            "-m", 
+            "pip", 
+            "install", 
+            "-r", 
+            str(requirements_file)
+        ])
+        print("Все зависимости успешно установлены.")
+    except subprocess.CalledProcessError as e:
+        print(f"Ошибка при установке зависимостей: {e}")
+        sys.exit(1)
 
-# Использование
-install_pip()
+def main():
+    # Создаем виртуальную среду
+    create_virtual_environment()
+    
+    # Устанавливаем/обновляем pip
+    install_pip()
+    
+    # Устанавливаем зависимости
+    install_requirements()
+
+if __name__ == "__main__":
+    main()

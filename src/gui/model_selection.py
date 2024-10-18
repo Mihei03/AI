@@ -1,12 +1,22 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QComboBox, QProgressBar, QMessageBox, QHBoxLayout
-from PyQt6.QtCore import QThread, pyqtSignal, QObject
+import sys
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QComboBox, QProgressBar, QMessageBox, QHBoxLayout
+from PyQt5.QtCore import QThread, pyqtSignal, QObject
 import os
 from pathlib import Path
 import shutil
-from audio_separation import split_audio
-from audio_merging import merge
 import glob
 import json
+
+project_root = Path(__file__).parent
+sys.path.append(str(project_root))
+
+import copy
+import glob
+import os
+import json
+
+from src.audio.audio_separation import split_audio
+from src.audio.audio_merging import merge
 
 class ConversionWorker(QObject):
     progress = pyqtSignal(int)
@@ -22,7 +32,7 @@ class ConversionWorker(QObject):
     def run(self):
         try:
             os.chdir("./sovits")
-            from sovits.audio_conversion import convert
+            from src.audio.audio_conversion import convert
             total_files = len(list(self.temp_raw_path.glob('*.wav')))
             for i, file in enumerate(self.temp_raw_path.glob('*.wav')):
                 convert(file, self.temp_song_path, self.selected_speaker, noise_scale=0.9, transpose=0)

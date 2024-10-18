@@ -4,11 +4,12 @@ from git import Repo
 from pathlib import Path
 from git import RemoteProgress
 from tqdm import tqdm
-import model_loader
 import extraction
 
-SOVITS_DIR = Path(Path.cwd(), "sovits")
-MODELS_DIR = Path(Path.cwd(), "models")
+# Update the base directory to src/SOVITS
+BASE_DIR = Path(Path.cwd(), "src", "SOVITS")
+SOVITS_DIR = BASE_DIR
+MODELS_DIR = Path(BASE_DIR, "models")
 
 class __GitCloneProgress(RemoteProgress):
     def __init__(self):
@@ -25,7 +26,7 @@ def _load_sovits():
         print("so-vits-svc folder already exists")
         return
     
-    Path.mkdir(SOVITS_DIR)    
+    Path.mkdir(SOVITS_DIR, parents=True, exist_ok=True)
     sovits_url = "https://github.com/effusiveperiscope/so-vits-svc"
     branch_name = "eff-4.0"
 
@@ -37,20 +38,20 @@ def _load_sovits():
 
     print("so-vits-svc cloned")
 
-
 def _load_hubert_model():
-    model_loader.download(["https://huggingface.co/therealvul/so-vits-svc-4.0-init/resolve/main/checkpoint_best_legacy_500.pt"],
+    from model_loader import download
+    Path(SOVITS_DIR, "hubert").mkdir(parents=True, exist_ok=True)
+    download(["https://huggingface.co/therealvul/so-vits-svc-4.0-init/resolve/main/checkpoint_best_legacy_500.pt"],
               filenames=[f"{SOVITS_DIR}/hubert/checkpoint_best_legacy_500.pt"])
-    
 
 def _load_kanye_model():
     if not Path.exists(MODELS_DIR):
-        Path.mkdir(MODELS_DIR)
+        Path.mkdir(MODELS_DIR, parents=True, exist_ok=True)
 
     downloaded_filename = Path(MODELS_DIR, "kanye.zip")
-    model_loader.download(["https://mega.nz/file/Dr40kCQI#G3bEWPvUvTa9SBJKQt7rETgcFds4ssnJF0nGN9aAXTk"], filenames=[downloaded_filename])
+    from model_loader import download
+    download(["https://mega.nz/file/Dr40kCQI#G3bEWPvUvTa9SBJKQt7rETgcFds4ssnJF0nGN9aAXTk"], filenames=[downloaded_filename])
     extraction.extract(downloaded_filename, MODELS_DIR)
-
 
 def initial_setup():
     _load_sovits()

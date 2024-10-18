@@ -1,8 +1,19 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QComboBox
-from PyQt6.QtWidgets import QMessageBox, QHBoxLayout
+import sys
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QComboBox
+from PyQt5.QtWidgets import QMessageBox, QHBoxLayout
 from pathlib import Path
 import shutil
-from audio_separation import separate
+
+project_root = Path(__file__).parent
+sys.path.append(str(project_root))
+
+import copy
+import glob
+import os
+import json
+
+from src.audio.audio_separation import separate
+
 
 class SeparationWindow(QWidget):
     def __init__(self):
