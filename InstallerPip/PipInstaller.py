@@ -34,33 +34,6 @@ def get_venv_python():
         python_path = parent_dir / "AI_venv/bin/python"
     return str(python_path.absolute())
 
-def install_pip():
-    """Установка pip в виртуальной среде, если необходимо"""
-    python_exe = get_venv_python()
-    get_pip_url = "https://bootstrap.pypa.io/get-pip.py"
-    parent_dir = get_parent_dir()
-    get_pip_path = parent_dir / "get-pip.py"
-
-    try:
-        # Загрузка скрипта get-pip.py
-        subprocess.check_call([
-            python_exe, 
-            "-c", 
-            f"import urllib.request; urllib.request.urlretrieve('{get_pip_url}', '{str(get_pip_path)}')"
-        ])
-        # Установка pip
-        subprocess.check_call([python_exe, str(get_pip_path)])
-        print("pip успешно установлен в виртуальной среде.")
-    except subprocess.CalledProcessError as e:
-        print(f"Ошибка при установке pip: {e}")
-        sys.exit(1)
-    finally:
-        # Удаление временного файла get-pip.py
-        try:
-            get_pip_path.unlink()
-        except:
-            pass
-
 def install_requirements():
     """Установка пакетов из файла requirements.txt"""
     python_exe = get_venv_python()
@@ -91,10 +64,7 @@ def install_requirements():
 def main():
     # Создаем виртуальную среду
     create_virtual_environment()
-    
-    # Устанавливаем/обновляем pip
-    install_pip()
-    
+
     # Устанавливаем зависимости
     install_requirements()
 

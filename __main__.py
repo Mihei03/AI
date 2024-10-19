@@ -22,7 +22,7 @@ from src.audio.audio_merging import merge
 import src.utils.startup
 import src.utils.model_loader
 import src.utils.megadown
-
+from src.gui.audio_processing import AudioProcessingWindow
 
 import soundfile
 import librosa
@@ -50,15 +50,14 @@ class MainApp(QMainWindow):
         self.setGeometry(100, 100, 600, 400)
         self.path_mgr = PathManager()
         self.show_welcome_window()
+        self.current_song_path = None
 
     def show_welcome_window(self):
         self.welcome_window = WelcomeWindow()
-
-        # Обработчики для кнопок
+        self.welcome_window.process_audio_button.setEnabled(True)  # Явно включаем кнопку
         self.welcome_window.create_model_button.clicked.connect(self.on_create_model_clicked)
         self.welcome_window.process_audio_button.clicked.connect(self.show_separation_window)
         self.welcome_window.exit_button.clicked.connect(self.close)
-
         self.setCentralWidget(self.welcome_window)
 
     def on_create_model_clicked(self):
@@ -73,12 +72,16 @@ class MainApp(QMainWindow):
 
     def show_model_selection_window(self):
         self.model_selection_window = ModelSelectionWindow()
-        self.model_selection_window.populate_models(self.get_speakers(self.path_mgr.get_path("models")))
-        self.model_selection_window.back_button.clicked.connect(self.show_separation_window)
+        self.model_selection_window.back_button.clicked.connect(lambda: self.show_separation_window())
         self.model_selection_window.next_button.clicked.connect(self.process_model_selection)
         self.setCentralWidget(self.model_selection_window)
 
+    def show_audio_processing_window(self, temp_song_path):
+        self.audio_processing_window = AudioProcessingWindow(temp_song_path)
+        self.setCentralWidget(self.audio_processing_window)
+
     def process_audio(self):
+        self.current_song_path = self.separation_window.song_path
         if not self.separation_window.song_path:
             QMessageBox.warning(self, "Ошибка", "Выберите песню для обработки.")
             return
@@ -106,11 +109,10 @@ class MainApp(QMainWindow):
             self.show_model_selection_window()
 
     def process_model_selection(self):
-        selected_model = self.model_selection_window.model_combobox.currentText()
-        selected_speaker = next((s for s in self.get_speakers(self.path_mgr.get_path("models")) if s["name"] == selected_model), None)
+        selected_speaker = self.model_selection_window.get_selected_speaker()
         
         if not selected_speaker:
-            QMessageBox.warning(self, "Ошибка", "Выбранная модель не найдена.")
+            QMessageBox.warning(self, "Ошибка", "Выберите корректную папку с моделью.")
             return
 
         temp_dir = self.path_mgr.get_path("temp")
@@ -131,83 +133,22 @@ class MainApp(QMainWindow):
             return
 
         try:
-            print(f"Current working directory: {os.getcwd()}")
-            print(f"SOVITS directory: {self.path_mgr.sovits_dir}")
-            print(f"Files in SOVITS directory: {os.listdir(self.path_mgr.sovits_dir)}")
-            
-            # Добавляем путь к директории so-vits-svc-eff-4.0
-            #sovits_path = self.path_mgr.get_path("so-vits-svc-eff-4.0")
-            #sys.path.append(str(sovits_path))
-            
-            os.chdir(str(self.path_mgr.sovits_dir))  # Меняем текущую директорию
+            os.chdir(str(self.path_mgr.sovits_dir))
             from src.audio.audio_conversion import convert
             transpose = int(self.model_selection_window.trans_tx.text())
             cluster_ratio = float(self.model_selection_window.cluster_ratio_tx.text())
             noise_scale = float(self.model_selection_window.noise_scale_tx.text())
-            #auto_pitch = self.model_selection_window.auto_pitch_ck.isChecked()
             convert(temp_raw_path, temp_song_path, selected_speaker, noise_scale=noise_scale, transpose=transpose, cluster_ratio=cluster_ratio)
             os.chdir(str(self.path_mgr.ai_code_dir))
+            
+            # Добавляем уведомление об успешной обработке
+            QMessageBox.information(self, "Готово", "Обработка завершена успешно. Переходим к слиянию песен.")
+            
+            self.show_audio_processing_window(temp_song_path)
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось выполнить конвертацию голоса: {str(e)}")
             return
 
-        try:
-            merge(temp_song_path, temp_song_path)
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось объединить аудио: {str(e)}")
-            return
-
-        output_path = self.path_mgr.get_path("output")
-        output_path.mkdir(exist_ok=True)
-        
-        final_output_path = output_path / f"{Path(self.separation_window.song_path).stem}_converted.wav"
-        
-        try:
-            shutil.move(str(temp_song_path / "output.wav"), str(final_output_path))
-        except FileNotFoundError:
-            QMessageBox.warning(self, "Ошибка", f"Файл {temp_song_path / 'output.wav'} не найден.")
-            return
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось переместить файл: {str(e)}")
-            return
-
-        QMessageBox.information(self, "Готово", f"Обработка завершена. Результат сохранен в {final_output_path}")
-
-        shutil.rmtree(temp_dir)
-
-    def get_speakers(self, models_dir):
-        speakers = []
-        for _, directories, _ in os.walk(models_dir):
-            for folder in directories:
-                current_speaker = {}
-                current_path = Path(models_dir, folder)
-                pth_path_template = str(current_path / "G_*.pth")
-                pth_paths = glob.glob(pth_path_template)
-                if len(pth_paths) == 0:
-                    continue
-                current_speaker["model_path"] = pth_paths[0]
-                current_speaker["model_folder"] = folder
-
-                pt_path_template = str(current_path / "*.pt")
-                cluster_models = glob.glob(pt_path_template)
-                current_speaker["cluster_path"] = cluster_models[0] if cluster_models else ""
-
-                json_path_template = str(current_path / "*.json")
-                configs = glob.glob(json_path_template)
-                if len(configs) == 0:
-                    continue
-                current_speaker["cfg_path"] = configs[0]
-                with open(current_speaker["cfg_path"]) as f:
-                    try:
-                        cfg_json = json.load(f)
-                    except Exception as e:
-                        continue
-                    for name, i in cfg_json["spk"].items():
-                        current_speaker["name"] = name
-                        current_speaker["id"] = i
-                        if not name.startswith('.'):
-                            speakers.append(current_speaker)
-        return sorted(speakers, key=lambda x: x["name"].lower())
 
 if __name__ == "__main__":
     path_mgr = PathManager()

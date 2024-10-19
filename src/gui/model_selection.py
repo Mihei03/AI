@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QComboBox, QProgressBar, QMessageBox, QHBoxLayout, QLineEdit, QCheckBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QFileDialog,  QLabel, QPushButton, QComboBox, QProgressBar, QMessageBox, QHBoxLayout, QLineEdit, QCheckBox
 from PyQt5.QtCore import QThread, pyqtSignal, QObject
 import os
 from pathlib import Path
@@ -53,19 +53,27 @@ class ModelSelectionWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
-        self.thread = None
-        self.worker = None
+        self.selected_model_path = None
 
     def initUI(self):
         layout = QVBoxLayout()
-        layout.setSpacing(10)  # Уменьшаем общее расстояние между элементами
-        self.model_label = QLabel("Выберите модель голоса:")
+        layout.setSpacing(10)
+
+        self.model_label = QLabel("Выберите папку с моделью голоса:")
         self.model_label.setStyleSheet("font-size: 16px;")
         layout.addWidget(self.model_label)
 
-        self.model_combobox = QComboBox()
-        layout.addWidget(self.model_combobox)
-        self.model_combobox.setStyleSheet("font-size: 16px;")
+        model_selection_layout = QHBoxLayout()
+        self.model_path_label = QLabel("Папка не выбрана")
+        self.model_path_label.setStyleSheet("font-size: 14px;")
+        model_selection_layout.addWidget(self.model_path_label)
+
+        self.select_model_button = QPushButton("Выбрать модель")
+        self.select_model_button.setStyleSheet("font-size: 14px;")
+        self.select_model_button.clicked.connect(self.select_model)
+        model_selection_layout.addWidget(self.select_model_button)
+
+        layout.addLayout(model_selection_layout)
 
         layout.addStretch(5)
         self.trans_label = QLabel("Высота тона (хороший диапазон от -12 до 12):")
@@ -107,6 +115,51 @@ class ModelSelectionWindow(QWidget):
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
+    def select_model(self):
+        initial_dir = str(Path.cwd() / "src" / "SOVITS" / "models")
+        folder_path = QFileDialog.getExistingDirectory(self, "Выберите папку с моделью", initial_dir)
+        
+        if folder_path:
+            if self.check_model_folder(folder_path):
+                self.selected_model_path = folder_path
+                self.model_path_label.setText(f"Выбрана папка: {os.path.basename(folder_path)}")
+            else:
+                QMessageBox.warning(self, "Ошибка", "В выбранной папке не найдены необходимые файлы (.json и .pth)")
+    
+    def check_model_folder(self, folder_path):
+        json_files = glob.glob(os.path.join(folder_path, "*.json"))
+        pth_files = glob.glob(os.path.join(folder_path, "*.pth"))
+        return len(json_files) > 0 and len(pth_files) > 0
+    
+    def get_selected_speaker(self):
+        if not self.selected_model_path:
+            return None
+
+        speaker = {}
+        json_files = glob.glob(os.path.join(self.selected_model_path, "*.json"))
+        pth_files = glob.glob(os.path.join(self.selected_model_path, "G_*.pth"))
+        pt_files = glob.glob(os.path.join(self.selected_model_path, "*.pt"))
+
+        if json_files and pth_files:
+            speaker["cfg_path"] = json_files[0]
+            speaker["model_path"] = pth_files[0]
+            speaker["cluster_path"] = pt_files[0] if pt_files else ""
+            speaker["model_folder"] = os.path.basename(self.selected_model_path)
+
+            with open(speaker["cfg_path"]) as f:
+                try:
+                    cfg_json = json.load(f)
+                    for name, i in cfg_json["spk"].items():
+                        speaker["name"] = name
+                        speaker["id"] = i
+                        break
+                except Exception:
+                    return None
+
+            return speaker
+        
+        return None
+    
     def populate_models(self, models):
         self.model_combobox.clear()
         for model in models:
@@ -142,22 +195,12 @@ class ModelSelectionWindow(QWidget):
             
             convert(temp_raw_path, temp_song_path, selected_speaker, noise_scale=noise_scale, transpose=transpose, cluster_ratio=cluster_ratio)
             
-            # После конвертации перемещаем файл в output
-            output_path = Path.cwd() / "SOVITS" / "output"
-            output_path.mkdir(exist_ok=True)
-            
-            # Проверяем наличие выходного файла
-            output_file = temp_song_path / "output.wav"
-            if output_file.exists():
-                final_output_path = output_path / f"{temp_song_path.stem}_converted.wav"
-                shutil.move(str(output_file), str(final_output_path))
-                QMessageBox.information(self, "Готово", f"Обработка завершена. Результат сохранен в {final_output_path}")
-            else:
-                raise FileNotFoundError("Выходной файл не был создан")
+            # После конвертации возвращаем управление в MainApp
+            self.parent().show_audio_processing_window(temp_song_path)
 
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при конвертации: {str(e)}")
-            return
+            return None
 
     def update_progress(self, value):
         self.progress_bar.setValue(value)
@@ -178,7 +221,8 @@ class ModelSelectionWindow(QWidget):
             if (temp_song_path / "output.wav").exists():
                 final_output_path = output_path / f"{temp_song_path.stem}_converted.wav"
                 shutil.move(str(temp_song_path / "output.wav"), str(final_output_path))
-                QMessageBox.information(self, "Готово", f"Обработка завершена. Результат сохранен в {final_output_path}")
+                QMessageBox.information(self, "Готово", "Обработка завершена успешно. Переходим к слиянию песен.")
+                self.parent().show_audio_processing_window(temp_song_path)  # Переход к окну слияния песен
             else:
                 # Если output.wav не найден, выводим сообщение об ошибке
                 raise FileNotFoundError(f"Файл output.wav не найден в {temp_song_path}")
